@@ -95,14 +95,31 @@ int main(int argc, char *argv[]){
 		set_pipes(&temp_cmd, num_pipes);
 
 		err = check_redirects(&temp_cmd);
-		if (err == -1){
+		switch(err){
+			case 0:
+				break;
+			case -1:
+				printf("%s\n", minput_redir);
+				exit(EXIT_FAILURE);
+			case -2:
+				printf("%s\n", moutput_redir);
+				exit(EXIT_FAILURE);
+			case 1:
+				printf("%s\n", mambig_input);
+				exit(EXIT_FAILURE);
+			case 2:
+				printf("%s\n", mambig_output);
+				exit(EXIT_FAILURE);
+		}
+				
+		/*if (err == -1){
 			printf("%s\n", minput_redir);
 			exit(EXIT_FAILURE);
 		}
 		else if (err == -2){
 			printf("%s\n", moutput_redir);
 			exit(EXIT_FAILURE);
-		}
+		}*/
 
 		stage++;
 	} while ((cp = strstr(cp+1, "|")) != NULL);

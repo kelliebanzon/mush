@@ -22,16 +22,9 @@ int strcount(char *haystack, char *needle){
 
 cmd empty_cmd(){
 	cmd c = {0};
-	/*int i = 0;
-	c.line = NULL;
-	c.argc = 0;
-	for (; i < CMDARGS_LEN; i++){
-		c.argv[i] = NULL;
-	}*/
 	c.input = STDIN_FILENO;
 	c.output = STDOUT_FILENO;
 	c.stage = -1;
-	/*c.next = NULL;*/
 	return c;
 }
 
@@ -62,10 +55,10 @@ int set_pipes(cmd *c, int num_pipes){
 
 int check_redirects(cmd *c){
 	if (c->input != STDIN_FILENO && strchr(c->line, '<') != NULL){
-		return -1;
+		return 1;
 	}
 	if (c->output != STDOUT_FILENO && strchr(c->line, '>') != NULL){
-		return -2;
+		return 2;
 	}
 	if (strcount(c->line, "<") > 1){
 		return -1;

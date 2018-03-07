@@ -87,8 +87,10 @@ int set_pipes(cmd *c, int num_pipes);
 /* checks that input and output redirections are valid
  * allows < > redirects if pipes are not being used
  * returns 0 if all redirections are valid
- * returns -1 if input redirection is invalid
- * returns -2 if output redirection is invalid */
+ * returns -1 if there are too many input redirections
+ * returns -2 if there are too many output redirections
+ * returns 1 if there is a input pipe and an input redirection
+ * returns 2 if there is an output pipe and an output redirection */
 int check_redirects(cmd *c);
 
 #endif
