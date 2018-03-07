@@ -45,7 +45,8 @@ int main(int argc, char *argv[]){
 
 #if DEBUG
 	/*strncpy(cmdline, "ls < one > two three four\n", 27);*/
-	strcpy(cmdline, "ls < one two three | > more | sort\n");
+	strcpy(cmdline, "ls | more\n");
+	/*strcpy(cmdline, "ls < one two three |	| > more | sort\n");*/
 #endif
 #if !DEBUG
 	printf("line: ");
@@ -67,6 +68,11 @@ int main(int argc, char *argv[]){
 		printf("%s\n", mpipeline_len);
 		exit(EXIT_FAILURE);
 	}
+	
+	if (cmdline[0] == '|'){
+		printf("%s\n", mempty_pipe);
+		exit(EXIT_FAILURE);
+	}
 
 	cp = cmdline;
 	do{
@@ -76,9 +82,16 @@ int main(int argc, char *argv[]){
 		pipe_index = char_index(cp, "|");
 		/* handle each stage */
 		temp_cmd = empty_cmd();
+
 		strncpy(temp_cmd.line, cp, \
-			(pipe_index == -1)? strlen(cmdline): pipe_index);
+			(pipe_index == -1)? strlen(cp): pipe_index);
 		temp_cmd.stage = stage;
+		err = check_line(temp_cmd.line);
+		if (err == -1){
+			printf("%s\n", mempty_pipe);
+			exit(EXIT_FAILURE);
+		}
+
 		set_pipes(&temp_cmd, num_pipes);
 
 		err = check_redirects(&temp_cmd);

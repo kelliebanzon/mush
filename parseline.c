@@ -35,6 +35,16 @@ cmd empty_cmd(){
 	return c;
 }
 
+int check_line(char *l){
+	int i = 0, len = strlen(l);
+	for (; i < len; i++){
+		if (isgraph(l[i])){
+			return 0;
+		}
+	}
+	return -1;
+}
+
 int set_pipes(cmd *c, int num_pipes){
 	if (num_pipes == 0){
 		return 0;

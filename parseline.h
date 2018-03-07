@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 
 
 /* the maximum length of the command line (in bytes) */
@@ -69,6 +70,12 @@ int strcount(char *haystack, char *needle);
  * "default" values (e.g. input is stdin). This is done for ease of
  * execution here; all values will be properly set later. */
 cmd empty_cmd();
+
+/* checks that a line contains a valid command
+ * invalid commands include: spaces, new lines, empty strings, tabs,
+ * carriage returns, and other space characters
+ * returns 0 for valid lines, -1 for invalid ones */
+int check_line(char *l);
 
 /* sets the input and output attributes of a command based on the pipes 
  * if there is a pipe preceding the command, set the input to that pipe
