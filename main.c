@@ -26,7 +26,7 @@ const char *mambig_output = "ambiguous output";
 int main(int argc, char *argv[]){
 
 	int err = 0, index = 0, stage = 0, pipe_index = -1;
-	int num_pipes = -1;
+	int num_pipes = -1, i = 0;
 	char cmdline[CMDLINE_LEN] = {'\0'};
 	char *cp = NULL;
 	cmd *cmd_list[PIPELINE_LEN] = {'\0'};
@@ -44,8 +44,8 @@ int main(int argc, char *argv[]){
 #endif
 
 #if DEBUG
-	/*strncpy(cmdline, "ls < one > two three four\n", 27);*/
-	strcpy(cmdline, "ls | more\n");
+	strncpy(cmdline, "ls < one > two three four\n", 27);
+	/*strcpy(cmdline, "ls | more\n");*/
 	/*strcpy(cmdline, "ls < one two three |	| > more | sort\n");*/
 #endif
 #if !DEBUG
@@ -58,19 +58,19 @@ int main(int argc, char *argv[]){
 
 	/* if the command line is too long, quit */
 	if (strlen(cmdline) > CMDLINE_LEN){
-		printf("%s\n", mcmdline_len);
+		fprintf(stderr, "%s\n", mcmdline_len);
 		exit(EXIT_FAILURE);
 	}
 	
 	/* if the pipeline is too long, quit */
 	num_pipes = strcount(cmdline, "|");
 	if (num_pipes > PIPELINE_LEN){
-		printf("%s\n", mpipeline_len);
+		fprintf(stderr, "%s\n", mpipeline_len);
 		exit(EXIT_FAILURE);
 	}
 	
 	if (cmdline[0] == '|'){
-		printf("%s\n", mempty_pipe);
+		fprintf(stderr, "%s\n", mempty_pipe);
 		exit(EXIT_FAILURE);
 	}
 
@@ -88,38 +88,52 @@ int main(int argc, char *argv[]){
 		temp_cmd.stage = stage;
 		err = check_line(temp_cmd.line);
 		if (err == -1){
-			printf("%s\n", mempty_pipe);
+			fprintf(stderr, "%s\n", mempty_pipe);
 			exit(EXIT_FAILURE);
 		}
 
-		set_pipes(&temp_cmd, num_pipes);
+		err = parse_args(&temp_cmd);
+		switch(err){
+			case -1:
+				fprintf(stderr, "%s\n", minput_redir);
+				exit(EXIT_FAILURE);
+			case -2:
+				fprintf(stderr, "%s\n", moutput_redir);
+				exit(EXIT_FAILURE);
+			case -3:
+				fprintf(stderr, "%s\n", mcmdargs_len);
+				exit(EXIT_FAILURE);
+		}
 
-		err = check_redirects(&temp_cmd);
+		/*err = check_redirects(&temp_cmd);
 		switch(err){
 			case 0:
 				break;
 			case -1:
-				printf("%s\n", minput_redir);
+				fprintf(stderr, "%s\n", minput_redir);
 				exit(EXIT_FAILURE);
 			case -2:
-				printf("%s\n", moutput_redir);
+				fprintf(stderr, "%s\n", moutput_redir);
 				exit(EXIT_FAILURE);
 			case 1:
-				printf("%s\n", mambig_input);
+				fprintf(stderr, "%s\n", mambig_input);
 				exit(EXIT_FAILURE);
 			case 2:
-				printf("%s\n", mambig_output);
+				fprintf(stderr, "%s\n", mambig_output);
+				exit(EXIT_FAILURE);
+		}*/
+				
+		set_pipes(&temp_cmd, num_pipes);
+		switch(err){
+			case 1:
+				fprintf(stderr, "%s\n", mambig_input);
+				exit(EXIT_FAILURE);
+			case 2:
+				fprintf(stderr, "%s\n", mambig_output);
 				exit(EXIT_FAILURE);
 		}
-				
-		/*if (err == -1){
-			printf("%s\n", minput_redir);
-			exit(EXIT_FAILURE);
-		}
-		else if (err == -2){
-			printf("%s\n", moutput_redir);
-			exit(EXIT_FAILURE);
-		}*/
+
+		print_cmd(&temp_cmd);
 
 		stage++;
 	} while ((cp = strstr(cp+1, "|")) != NULL);
