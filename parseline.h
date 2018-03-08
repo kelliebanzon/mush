@@ -134,4 +134,16 @@ int check_redirects(cmd *c);
  * returns 0 on success, -1 on failure */
 int print_cmd(cmd *c);
 
+/* returns a formatted string describing the command's output
+ * returns NULL on error
+ * buf is a buffer to return
+ * type is:
+ * - 0 for input
+ * - 1 for output
+ * returns one of:
+ * - "original stdin" or "original stdout"
+ * - "pipe from stage #" or "pipe to stage #"
+ * - file name */
+char *format_inout(cmd *c, char *buf, int type);
+
 #endif

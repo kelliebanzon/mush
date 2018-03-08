@@ -186,7 +186,7 @@ int set_pipes(cmd *c, int num_pipes){
 	}
 }
 
-int check_redirects(cmd *c){
+int check_redirects(cmd *c){ /* TODO: delete probs */
 	if (c->input != STDIN_FILENO && strchr(c->line, '<') != NULL){
 		return 1;
 	}
@@ -203,12 +203,45 @@ int check_redirects(cmd *c){
 }
 
 int print_cmd(cmd *c){
+	char buf[CMDLINE_LEN];
 	printf("\n--------\n");
 	printf("Stage %i: \"%s\"\n", c->stage, c->line);
 	printf("--------\n");
-	printf("%10s: %s\n", "input", "temp TODO");
-	printf("%10s: %s\n", "output", "temp TODO");
+	printf("%10s: %s\n", "input", format_inout(c, buf, 0));
+	printf("%10s: %s\n", "output", format_inout(c, buf, 1));
 	printf("%10s: %i\n", "argc", c->argc);
 	printf("%10s: %s\n", "argv", "temp TODO");
 	return 0;
+}
+
+char *format_inout(cmd *c, char *buf, int type){
+	char temp[CMDLINE_LEN];
+	if (type == 0){
+		if (c->input_name[0] != '\0'){
+			sprintf(temp, "%s", c->input_name);
+		}
+		else if (c->input == STDIN_FILENO){
+			sprintf(temp, "original stdin");
+		}
+		else if (c->input < 0){
+			sprintf(temp, "pipe from stage %i", (c->stage*-1)+1);
+		}
+	}
+	else if (type == 1){
+		if (c->output_name[0] != '\0'){
+			sprintf(temp, "%s", c->output_name);
+		}
+		else if (c->output == STDOUT_FILENO){
+			sprintf(temp, "original stdout");
+		}
+		else if (c->output < 0){
+			sprintf(temp, "pipe to stage %i", (c->stage*-1)+1);
+		}
+	}
+	else{
+		fprintf(stderr, "format_inout: unrecognized type\n");
+		return NULL;
+	}
+	strncpy(buf, temp, strlen(temp));
+	return buf;
 }
