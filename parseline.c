@@ -38,6 +38,7 @@ int check_line(char *l){
 	return -1;
 }
 
+/* TODO: there is still a bug that "ls < | more" will pass */
 int parse_args(cmd *c){
 	int j = 0, err = 0;
 	char *curr = c->line, *next = NULL, *direct = NULL;
@@ -50,31 +51,19 @@ int parse_args(cmd *c){
 		if (c->argc >= 10){
 			return -3;
 		}
-		if (!isspace(*curr)){
+		if (!isspace(*curr)){ /* to strip leading whitespace */
 			next = strpbrk(curr, whitespace);
-			if (next == NULL){
-				if (*curr == '<' || *curr == '>'){
+			if (next == NULL && !(*curr == '<' || *curr == '>')){
+				strcpy(c->argv[c->argc++], curr);
+				return 0;
+			}
+			else if (*curr == '>' || *curr == '<'){
+				if (next == NULL){
 					return bad_redirect(curr);
 				}
-				else{
-					strcpy(c->argv[c->argc++], curr);
-					return 0;
-				}
-			}
-			/* note: must check redirection arguments now, instead
-			 * of parsing them into the char array and then handling
-			 * them, due to the technique of initializing the char
-			 * array with the maximum argc value */
-			else if (*curr == '>' || *curr == '<'){
 				direct = curr;
 				curr = next+1;
-				next = NULL;
-				for (j = 0; j < strlen(curr); j++){
-					if (isspace(curr[j])){
-						next = curr + j;
-						break;
-					}
-				}
+				next = strpbrk(curr, whitespace);
 				if (next && (*next == '>' || *next == '<')){
 					return bad_redirect(curr);
 				}
@@ -86,17 +75,9 @@ int parse_args(cmd *c){
 					else{
 						strncpy(f, curr, strlen(curr));
 					}
-					if (*direct == '<'){
-						err = set_inoutname(c, 0, f);
-						if (err < 0){
-							return err;
-						}
-					}
-					else if (*direct == '>'){
-						err = set_inoutname(c, 1, f);
-						if (err < 0){
-							return err;
-						}
+					err = set_inoutname(c, direct, f);
+					if (err < 0){
+						return err;
 					}
 					if (next){
 						curr = next+1;
@@ -132,13 +113,13 @@ int bad_redirect(char *c){
 	}
 }
 
-int set_inoutname(cmd *c, int inout, char *fname){
+int set_inoutname(cmd *c, char *direct, char *fname){
 	if (fname == NULL){
 		fprintf(stderr, "%s\n", \
 		"set_inoutname: given file name is NULL");
 		return -1;
 	}
-	if (inout == 0){
+	if (*direct == '<'){
 		if (c->input != STDIN_FILENO){
 			return -1;
 		}
@@ -147,7 +128,7 @@ int set_inoutname(cmd *c, int inout, char *fname){
 			c->input = -1;
 		}
 	}
-	else if (inout == 1){
+	else if (*direct == '>'){
 		if (c->output != STDOUT_FILENO){
 			return -2;
 		}

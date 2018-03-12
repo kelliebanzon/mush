@@ -85,6 +85,10 @@ int check_line(char *l);
 
 /* separates the arguments using the spaces between them
  * stores the char pointers in argv
+ * redirection arguments are handled here (instead
+ * of parsing them into the char array and then handling
+ * them) due to the technique of initializing the char
+ * array with the maximum argc value
  * returns
  * - 0 on success
  * - -1 if input redirection lacks a destination
@@ -108,7 +112,7 @@ int bad_redirect(char *c);
  * returns 0 on success
  * returns -1 if there are too many input redirections
  * returns -2 if there are too many output redirections */
-int set_inoutname(cmd *c, int inout, char *fname);
+int set_inoutname(cmd *c, char *direct, char *fname);
 
 /* sets the input and output attributes of a command based on the pipes 
  * if there is a pipe preceding the command, set the input to that pipe
