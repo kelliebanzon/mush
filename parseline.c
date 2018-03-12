@@ -64,28 +64,23 @@ int parse_args(cmd *c){
 				direct = curr;
 				curr = next+1;
 				next = strpbrk(curr, whitespace);
-				if (next && (*next == '>' || *next == '<')){
-					return bad_redirect(curr);
+				char f[CMDLINE_LEN];
+				if (next){
+					strncpy(f, curr, next-curr);
+				} /* TODO: double check maths */
+				else{
+					strncpy(f, curr, strlen(curr));
+				}
+				err = set_inoutname(c, direct, f);
+				if (err < 0){
+					return err;
+				}
+				if (next){
+					curr = next+1;
+					next = NULL;
 				}
 				else{
-					char f[CMDLINE_LEN];
-					if (next){
-						strncpy(f, curr, next-curr);
-					} /* TODO: double check maths */
-					else{
-						strncpy(f, curr, strlen(curr));
-					}
-					err = set_inoutname(c, direct, f);
-					if (err < 0){
-						return err;
-					}
-					if (next){
-						curr = next+1;
-						next = NULL;
-					}
-					else{
-						return 0;
-					}
+					return 0;
 				}
 			}
 			else{
