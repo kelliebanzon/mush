@@ -92,6 +92,12 @@ int check_line(char *l);
  * - -3 if too many arguments are found */
 int parse_args(cmd *c);
 
+/* returns the appropriate error values for malformatted redirects 
+ * returns -1 for bad input redirection 
+ * returns -2 for bad output redirection
+ * returns 0 if everything is fine */
+int bad_redirect(char *c);
+
 /* sets the input/output of a command to the given file
  * if inout is 0: fname is stored to input_name
  * if inout is 1: fname is stored to output_name

@@ -53,11 +53,8 @@ int parse_args(cmd *c){
 		if (!isspace(*curr)){
 			next = strpbrk(curr, whitespace);
 			if (next == NULL){
-				if (*curr == '>'){
-					return -2;
-				}
-				else if (*curr == '<'){
-					return -1;
+				if (*curr == '<' || *curr == '>'){
+					return bad_redirect(curr);
 				}
 				else{
 					strcpy(c->argv[c->argc++], curr);
@@ -79,12 +76,7 @@ int parse_args(cmd *c){
 					}
 				}
 				if (next && (*next == '>' || *next == '<')){
-					if (*direct == '<'){
-						return -1;
-					}
-					else if (*direct == '>'){
-						return -2;
-					}
+					return bad_redirect(curr);
 				}
 				else{
 					char f[CMDLINE_LEN];
@@ -126,6 +118,18 @@ int parse_args(cmd *c){
 		}
 	}
 	return 0;
+}
+
+int bad_redirect(char *c){
+	if (*c == '<'){
+		return -1;
+	}
+	else if (*c == '>'){
+		return -2;
+	}
+	else{
+		return 0;
+	}
 }
 
 int set_inoutname(cmd *c, int inout, char *fname){
