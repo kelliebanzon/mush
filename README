@@ -15,14 +15,17 @@ None
 
 --------------------------------------------------
 Other Information:
-TODO:
-- document limits: cmdline, pipeline, cmdargs, etc.
 
+Maximum macros implemented:
+- the maximum length of the command line: 512 bytes
+- the maximum length of the pipeline: 10
+- the maximum number of arguments to any one command: 10
 
 Your joke this time around:
 "What do you call a dinosaur with a extensive vocabulary? A thesaurus."
 --------------------------------------------------
 Project Quotes:
+
 KK: "Leave me lchown."
 KK: "I was trying to find you guys in the crowd and you really stdout."
 KMYZ: "I stderr-ed at you."

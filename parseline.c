@@ -39,7 +39,7 @@ int check_line(char *l){
 }
 
 int parse_args(cmd *c){
-	int j = 0, arg = 0, err = 0;
+	int j = 0, err = 0;
 	char *curr = c->line, *next = NULL, *direct = NULL;
 	/* the ASCII decimal codes of the whitespace characters */
 	char whitespace[] = " 	\n\r";
@@ -47,14 +47,22 @@ int parse_args(cmd *c){
 	/* note: c->line+1 is a safe assignment because check_line already
 	 * verified that c->line is not empty */
 	while (curr != NULL && *curr != '\0'){
-		if (arg >= 10){
+		if (c->argc >= 10){
 			return -3;
 		}
 		if (!isspace(*curr)){
 			next = strpbrk(curr, whitespace);
 			if (next == NULL){
-				strcpy(c->argv[c->argc++], curr); /* TODO: this will probably throw a SIGSEGV */
-				return 0; /* TODO: check */
+				if (*curr == '>'){
+					return -2;
+				}
+				else if (*curr == '<'){
+					return -1;
+				}
+				else{
+					strcpy(c->argv[c->argc++], curr);
+					return 0;
+				}
 			}
 			/* note: must check redirection arguments now, instead
 			 * of parsing them into the char array and then handling
@@ -70,31 +78,41 @@ int parse_args(cmd *c){
 						break;
 					}
 				}
-				if (next == NULL || *next == '>' || *next == '<'){
-					if (*next == '<'){
+				if (next && (*next == '>' || *next == '<')){
+					if (*direct == '<'){
 						return -1;
 					}
-					else if (*next == '>'){
+					else if (*direct == '>'){
 						return -2;
 					}
 				}
 				else{
-					char fname[CMDLINE_LEN];
-					strncpy(fname, curr, next-curr);
+					char f[CMDLINE_LEN];
+					if (next){
+						strncpy(f, curr, next-curr);
+					} /* TODO: double check maths */
+					else{
+						strncpy(f, curr, strlen(curr));
+					}
 					if (*direct == '<'){
-						err = set_inoutname(c, 0, fname);
+						err = set_inoutname(c, 0, f);
 						if (err < 0){
 							return err;
 						}
 					}
 					else if (*direct == '>'){
-						err = set_inoutname(c, 1, fname);
+						err = set_inoutname(c, 1, f);
 						if (err < 0){
 							return err;
 						}
 					}
-					curr = next+1;
-					next = NULL;
+					if (next){
+						curr = next+1;
+						next = NULL;
+					}
+					else{
+						return 0;
+					}
 				}
 			}
 			else{
@@ -112,7 +130,8 @@ int parse_args(cmd *c){
 
 int set_inoutname(cmd *c, int inout, char *fname){
 	if (fname == NULL){
-		fprintf(stderr, "%s\n", "set_inoutname: given file name is NULL");
+		fprintf(stderr, "%s\n", \
+		"set_inoutname: given file name is NULL");
 		return -1;
 	}
 	if (inout == 0){
@@ -140,27 +159,6 @@ int set_inoutname(cmd *c, int inout, char *fname){
 	return 0;
 }
 
-/*int set_inout(cmd *c, int inout, int where, int type){
-	int *c_inout;
-	switch(inout){
-		case 0:
-			c_inout = &(c->input);
-			break;
-		case 1:
-			c_inout = &(c->output);
-			break;
-		default:
-			fprintf(stderr, "%s\n", \
-			"set_inout: destination not recognized");
-			return -1;
-	}
-	if (type < 0){
-		if (inout == 0){
-			c->input = where*(-1);
-		}
-		else if (inout == 1){
-			c->outpu*/
-
 int set_pipes(cmd *c, int num_pipes){
 	if (num_pipes == 0){
 		return 0;
@@ -186,22 +184,6 @@ int set_pipes(cmd *c, int num_pipes){
 	}
 }
 
-int check_redirects(cmd *c){ /* TODO: delete probs */
-	if (c->input != STDIN_FILENO && strchr(c->line, '<') != NULL){
-		return 1;
-	}
-	if (c->output != STDOUT_FILENO && strchr(c->line, '>') != NULL){
-		return 2;
-	}
-	if (strcount(c->line, "<") > 1){
-		return -1;
-	}
-	if (strcount(c->line, ">") > 1){
-		return -2;
-	}
-	return 0;
-}
-
 int print_cmd(cmd *c){
 	char buf[CMDLINE_LEN];
 	printf("\n--------\n");
@@ -210,12 +192,12 @@ int print_cmd(cmd *c){
 	printf("%10s: %s\n", "input", format_inout(c, buf, 0));
 	printf("%10s: %s\n", "output", format_inout(c, buf, 1));
 	printf("%10s: %i\n", "argc", c->argc);
-	printf("%10s: %s\n", "argv", "temp TODO");
+	printf("%10s: %s\n", "argv", format_argv(c, buf));
 	return 0;
 }
 
 char *format_inout(cmd *c, char *buf, int type){
-	char temp[CMDLINE_LEN];
+	char temp[CMDLINE_LEN] = {'\0'};
 	if (type == 0){
 		if (c->input_name[0] != '\0'){
 			sprintf(temp, "%s", c->input_name);
@@ -224,7 +206,7 @@ char *format_inout(cmd *c, char *buf, int type){
 			sprintf(temp, "original stdin");
 		}
 		else if (c->input < 0){
-			sprintf(temp, "pipe from stage %i", (c->stage*-1)+1);
+			sprintf(temp, "pipe from stage %i", (c->input*-1)-1);
 		}
 	}
 	else if (type == 1){
@@ -235,13 +217,25 @@ char *format_inout(cmd *c, char *buf, int type){
 			sprintf(temp, "original stdout");
 		}
 		else if (c->output < 0){
-			sprintf(temp, "pipe to stage %i", (c->stage*-1)+1);
+			sprintf(temp, "pipe to stage %i", (c->output*-1)-1);
 		}
 	}
 	else{
 		fprintf(stderr, "format_inout: unrecognized type\n");
 		return NULL;
 	}
-	strncpy(buf, temp, strlen(temp));
+	strncpy(buf, temp, strlen(temp)+1);
+	return buf;
+}
+
+char *format_argv(cmd *c, char *buf){
+	int i = 0;
+	char temp[CMDLINE_LEN] = {'\0'};
+	for (i = 0; i < c->argc; i++){
+		sprintf(temp + strlen(temp), "\"%s\",", c->argv[i]);
+	}
+	/* strip the trailing comma */
+	temp[strlen(temp)-1] = '\0';
+	strncpy(buf, temp, strlen(temp)+1);
 	return buf;
 }

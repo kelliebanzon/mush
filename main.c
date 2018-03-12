@@ -44,7 +44,14 @@ int main(int argc, char *argv[]){
 #endif
 
 #if DEBUG
-	strncpy(cmdline, "ls < one > two three four\n", 27);
+	strcpy(cmdline, "ls <\n");
+	/*strcpy(cmdline, "ls < a | more < file\n");*/
+	/*strcpy(cmdline, \
+	"This command has way more than the required ten arguments.");
+	strcat(cmdline, " It really should make up its mind.\n");*/
+	/*strcpy(cmdline, "cat < foo > bar\n");*/
+	/*strcpy(cmdline, "ls < one | more | sort\n");*/
+	/*strncpy(cmdline, "ls < one > two three four\n", 27);*/
 	/*strcpy(cmdline, "ls | more\n");*/
 	/*strcpy(cmdline, "ls < one two three |	| > more | sort\n");*/
 #endif
@@ -123,7 +130,7 @@ int main(int argc, char *argv[]){
 				exit(EXIT_FAILURE);
 		}*/
 				
-		set_pipes(&temp_cmd, num_pipes);
+		err = set_pipes(&temp_cmd, num_pipes);
 		switch(err){
 			case 1:
 				fprintf(stderr, "%s\n", mambig_input);

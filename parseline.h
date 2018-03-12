@@ -92,14 +92,6 @@ int check_line(char *l);
  * - -3 if too many arguments are found */
 int parse_args(cmd *c);
 
-/* sets the input/output for a given command
- * - if inout is 0, then given attributes are for input
- * - if inout is 1, then given attributes are for output
- * - if type is less than 0, then where is a pipe number TODO: do i actually want to do this??
- * - if type is greater than 2, then where is a file descriptor
- * returns 0 on success, -1 on error */
-/*int set_inout(cmd *c, int where, int type);*/
-
 /* sets the input/output of a command to the given file
  * if inout is 0: fname is stored to input_name
  * if inout is 1: fname is stored to output_name
@@ -121,15 +113,6 @@ int set_inoutname(cmd *c, int inout, char *fname);
  * returns 2 if there is an output pipe and an output redirection */
 int set_pipes(cmd *c, int num_pipes);
 
-/* checks that input and output redirections are valid
- * allows < > redirects if pipes are not being used
- * returns 0 if all redirections are valid
- * returns -1 if there are too many input redirections
- * returns -2 if there are too many output redirections
- * returns 1 if there is a input pipe and an input redirection
- * returns 2 if there is an output pipe and an output redirection */
-int check_redirects(cmd *c);
-
 /* prints out the contents of the command struct 
  * returns 0 on success, -1 on failure */
 int print_cmd(cmd *c);
@@ -145,5 +128,9 @@ int print_cmd(cmd *c);
  * - "pipe from stage #" or "pipe to stage #"
  * - file name */
 char *format_inout(cmd *c, char *buf, int type);
+
+/* returns a list of the arguments passed to a command,
+ * each separated by commas and quotation marks */
+char *format_argv(cmd *c, char *buf);
 
 #endif
