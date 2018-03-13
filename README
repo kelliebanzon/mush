@@ -5,9 +5,9 @@ An implementation of the Minimally Useful Shell (mush) written for CPE 357
 Kellie Banzon (kmbanzon)	- Nico		CPE 357-05
 Gregory Chu (gdchu)			- Taylor	CPE 357-07
 
-2018/03/05
+2018/03/12
 
-asgn05: mush
+asgn06: mush
 
 --------------------------------------------------
 Special Instructions:
@@ -22,10 +22,7 @@ Maximum macros implemented:
 - the maximum number of arguments to any one command: 10
 
 Your joke this time around:
-"What do you call a dinosaur with a extensive vocabulary? A thesaurus."
+"I started a band called 999 Megabytes — we haven’t gotten a gig yet."
 --------------------------------------------------
 Project Quotes:
 
-KK: "Leave me lchown."
-KK: "I was trying to find you guys in the crowd and you really stdout."
-KMYZ: "I stderr-ed at you."
