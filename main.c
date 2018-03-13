@@ -30,27 +30,16 @@ int main(int argc, char *argv[]){
 	char cmdline[CMDLINE_LEN] = {'\0'};
 	char *cp = NULL;
 	cmd *cmd_list[PIPELINE_LEN] = {'\0'};
-	cmd temp_cmd = {0};
+	cmd *temp_cmd = NULL;
 
 #if DEBUG
-	printf("%i\n", strcount("canta loupe", " "));
-	printf("%i\n", strcount("can ta lo upe ", " "));
-	printf("%i\n", strcount(" cantaloupe", " "));
-	printf("%i\n", strcount(" cantaloupe ", " "));
-	printf("%i\n", strcount("cantaloupe ", " "));
-	printf("%i\n", strcount("cantaloupe", " "));
-	printf("%i\n", strcount("", " "));
-	printf("%i\n", strcount(" ", " "));
-#endif
-
-#if DEBUG
-	strcpy(cmdline, "ls <\n");
+	/*strcpy(cmdline, "ls <\n");*/
 	/*strcpy(cmdline, "ls < a | more < file\n");*/
 	/*strcpy(cmdline, \
 	"This command has way more than the required ten arguments.");
 	strcat(cmdline, " It really should make up its mind.\n");*/
 	/*strcpy(cmdline, "cat < foo > bar\n");*/
-	/*strcpy(cmdline, "ls < one | more | sort\n");*/
+	strcpy(cmdline, "ls < one | more | sort\n");
 	/*strncpy(cmdline, "ls < one > two three four\n", 27);*/
 	/*strcpy(cmdline, "ls | more\n");*/
 	/*strcpy(cmdline, "ls < one two three |	| > more | sort\n");*/
@@ -88,18 +77,24 @@ int main(int argc, char *argv[]){
 		}
 		pipe_index = char_index(cp, "|");
 		/* handle each stage */
-		temp_cmd = empty_cmd();
+		cmd_list[i] = (cmd *)calloc(1, sizeof(cmd));
+		if (cmd_list[i] == NULL){
+			perror("cmd_list calloc");
+			return -1;
+		}
+		*cmd_list[i] = empty_cmd();
+		temp_cmd = cmd_list[i];
 
-		strncpy(temp_cmd.line, cp, \
+		strncpy(temp_cmd->line, cp, \
 			(pipe_index == -1)? strlen(cp): pipe_index);
-		temp_cmd.stage = stage;
-		err = check_line(temp_cmd.line);
+		temp_cmd->stage = stage;
+		err = check_line(temp_cmd->line);
 		if (err == -1){
 			fprintf(stderr, "%s\n", mempty_pipe);
 			exit(EXIT_FAILURE);
 		}
 
-		err = parse_args(&temp_cmd);
+		err = parse_args(temp_cmd);
 		switch(err){
 			case -1:
 				fprintf(stderr, "%s\n", minput_redir);
@@ -111,26 +106,8 @@ int main(int argc, char *argv[]){
 				fprintf(stderr, "%s\n", mcmdargs_len);
 				exit(EXIT_FAILURE);
 		}
-
-		/*err = check_redirects(&temp_cmd);
-		switch(err){
-			case 0:
-				break;
-			case -1:
-				fprintf(stderr, "%s\n", minput_redir);
-				exit(EXIT_FAILURE);
-			case -2:
-				fprintf(stderr, "%s\n", moutput_redir);
-				exit(EXIT_FAILURE);
-			case 1:
-				fprintf(stderr, "%s\n", mambig_input);
-				exit(EXIT_FAILURE);
-			case 2:
-				fprintf(stderr, "%s\n", mambig_output);
-				exit(EXIT_FAILURE);
-		}*/
 				
-		err = set_pipes(&temp_cmd, num_pipes);
+		err = set_pipes(temp_cmd, num_pipes);
 		switch(err){
 			case 1:
 				fprintf(stderr, "%s\n", mambig_input);
@@ -140,12 +117,17 @@ int main(int argc, char *argv[]){
 				exit(EXIT_FAILURE);
 		}
 
-		print_cmd(&temp_cmd);
+		/*print_cmd(&temp_cmd);*/
 
 		stage++;
+		i++;
 	} while ((cp = strstr(cp+1, "|")) != NULL);
 
-
+	/* print all of the cmds stored */
+	for (i = 0; cmd_list[i] != NULL; i++){
+		print_cmd(cmd_list[i]);
+		printf("\n");
+	}
 
 	return 0;
 }
