@@ -49,31 +49,10 @@ int run_cd(cmd *c){
 int run_cmd(cmd *c){
     char *a[CMDARGS_LEN+2];
     int err, i;
-    /*a[0] = (char *)calloc(strlen("./mush")+1, sizeof(char));
-    if (a[0] == NULL){
-        perror("run_cd");
-        return -1;
-    }
-    else{
-        strncpy(a[0], "./mush", strlen("./mush"));
-    }*/
     a[0] = "./mush";
     for (i = 1; i < c->argc; i++){
-        /*a[i] = (char *)calloc(strlen(c->argv[i])+1, sizeof(char));
-        if (a[i] == NULL){
-            perror("run_cd");
-            return -1;
-        }
-        else{
-            strncpy(a[i], c->argv[i], strlen(c->argv[i]));
-        }*/
         a[i] = c->argv[i];
     }
-    /*a[i] = (char *)calloc(1, sizeof(char));
-    if (a[i] == NULL){
-        perror("run_cd");
-        return -1;
-    }*/
     a[i] = NULL;
     err = execvp(c->argv[0], a);
     return err;
