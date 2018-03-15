@@ -11,18 +11,22 @@ int main(int argc, char *argv[]){
 	char buf[512] = {'\0'};
 #endif
 	cmd *cmd_list[PIPELINE_LEN] = {'\0'};
+	pid_t parent = getpid();
+	pid_t child;
 	int old[2] = {0}, new[2] = {0};
-	int i = 0, err, exit = 1, num_cmds = 0;
+	int i = 0, err, quit = 1, num_cmds = 0;
+	int flag = 0;
 
-	while (exit){
+	while (quit){
 
 #if !DEBUG
 		printf("8-P ");
 		fgets(pipeline, CMDLINE_LEN, stdin); /* TODO: tty nonsense? */
 #endif
 #if DEBUG
-		/*strcpy(pipeline, "ls < in | more | sort | wc\n");*/
-		strcpy(pipeline, "cd /home/kmbanzon/Documents\n");
+		strcpy(pipeline, "ls -l\n");
+		/*strcpy(pipeline, "ls | more | sort | wc\n");*/
+		/*strcpy(pipeline, "cd /home/kmbanzon/Documents\n");*/
 #endif
 
 		err = parse_pipeline(cmd_list, pipeline);
@@ -44,13 +48,41 @@ int main(int argc, char *argv[]){
 #if DEBUG2
 				printf("%s\n", getcwd(buf, 512));
 #endif
-				err = run_cd(cmd_list[i]); /* TODO: */
+				err = run_cd(cmd_list[i]); /* TODO: can't handle ~/ paths */
 				if (err < 0){
-					continue;
+					flag = 1;
 				}
 #if DEBUG2
 				printf("%s\n", getcwd(buf, 512));
 #endif
+			}
+			else{
+				child = fork();
+				if (child < 0){
+					perror(cmd_list[i]->argv[0]);
+					flag = 1;
+					continue;
+				}
+
+				if (getpid() == parent){
+					wait(NULL);
+				}
+
+				else if (child == 0){
+					err = run_cmd(cmd_list[i]);
+					if (err < 0){
+						perror(cmd_list[i]->argv[0]);
+						exit(EXIT_FAILURE);
+					}
+				}
+
+				/*if (err < 0){
+					flag = 1;
+					continue;
+				}*/
+			}
+			if (flag){
+				continue;
 			}
 		} /* TODO: */
 
@@ -61,7 +93,7 @@ int main(int argc, char *argv[]){
 #endif
 
 #if DEBUG
-		exit = 0;
+		quit = 0;
 #endif
 
 	}
