@@ -26,7 +26,7 @@ int main(int argc, char *argv[]){
 #endif
 #if DEBUG
         /*strcpy(pipeline, "ls -l\n");*/
-        strcpy(pipeline, "exit\n");
+        strcpy(pipeline, "ls | sort < foo\n");
         /*strcpy(pipeline, "ls | more | sort | wc\n");*/
         /*strcpy(pipeline, "cd /home/kmbanzon/Documents\n");*/
 #endif
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
             continue;
         }
 
-#if DEBUG
+#if DEBUG2
         if (err == 0){
             print_pipeline(cmd_list);
         }
@@ -45,30 +45,25 @@ int main(int argc, char *argv[]){
         for (num_cmds = 0; cmd_list[num_cmds] != NULL; num_cmds++){
             /* do nothing */
         }
+
         for (i = 0; i < num_cmds; i++){
             if (strcmp(cmd_list[i]->argv[0], "cd") == 0){
-#if DEBUG2
-                printf("%s\n", getcwd(buf, 512));
-#endif
-                err = run_cd(cmd_list[i]); /* TODO: can't handle ~/ paths */
+                err = run_cd(cmd_list[i]);
                 if (err < 0){
-                    flag = 1;
+                    break;
                 }
-#if DEBUG2
-                printf("%s\n", getcwd(buf, 512));
-#endif
             }
+
             else if ((strcmp(cmd_list[i]->argv[0], "exit") == 0) ||
                     strcmp(cmd_list[i]->argv[0], "quit") == 0){
-                flag = 1;
                 quit = 0;
                 break;	
             }
+
             else{
                 child = fork();
                 if (child < 0){
                     perror(cmd_list[i]->argv[0]);
-                    flag = 1;
                     break;
                 }
                 else{
@@ -80,14 +75,11 @@ int main(int argc, char *argv[]){
                     if (WIFEXITED(status)){
                         num_children--;
                         status = WEXITSTATUS(status);
-                        if (status == EXIT_FAILURE){
-                            flag = 1;
-                            break;
-                        }
                     }
                     else{
                         status = EXIT_FAILURE;
-                        flag = 1;
+                    }
+                    if (status == EXIT_FAILURE){
                         break;
                     }
                 }

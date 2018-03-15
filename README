@@ -21,6 +21,9 @@ Maximum macros implemented:
 - the maximum length of the pipeline: 10
 - the maximum number of arguments to any one command: 10
 
+Additional commands implemented:
+- "exit" and "quit" will both terminate the shell
+
 Your joke this time around:
 "I started a band called 999 Megabytes — we haven’t gotten a gig yet."
 --------------------------------------------------
