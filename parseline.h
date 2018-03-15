@@ -15,6 +15,25 @@
 /* the maximum number of arguments to any one command (in bytes) */
 #define CMDARGS_LEN 10
 
+/* error message if command line length limit is exceeded */
+#define MCMDLINE_LEN "command too long"
+/* error message if pipeline has too many elements */
+#define MPIPELINE_LEN "pipeline too deep"
+/* error message if individual command exceeds arguments limit */
+#define MCMDARGS_LEN "too many arguments"
+/* error message if pipeline has an empty stage */
+#define MEMPTY_PIPE "invalid null command"
+/* error message if  pipeline if a command has multiple redirects
+ * or missing redirect file name for input */
+#define MINPUT_REDIR "bad input redirection"
+/* error message if  pipeline if a command has multiple redirects
+ * or missing redirect file name for input */
+#define MOUTPUT_REDIR "bad output redirection"
+/* error message if stage has both input redirect and pipe in */
+#define MAMBIG_INPUT "ambiguous input"
+/* error message if stage has both output redirect and pipe out */
+#define MAMBIG_OUTPUT "ambiguous output"
+
 
 typedef struct command{
 	/* the full line of text associated with this command,
@@ -142,5 +161,14 @@ char *format_inout(cmd *c, char *buf, int type);
 /* returns a list of the arguments passed to a command,
  * each separated by commas and quotation marks */
 char *format_argv(cmd *c, char *buf);
+
+/* given a pipeline, parses and stores each stage into cmd_list
+ * returns 0 on success
+ * returns -1 on error */
+int parse_pipeline(cmd **cmd_list, char *pipeline);
+
+/* prints the contents of all the commands in the pipeline
+ * formatted as the output of asgn05 (parseline) was */
+void print_pipeline(cmd **cmd_list);
 
 #endif

@@ -40,7 +40,7 @@ int check_line(char *l){
 
 /* TODO: there is still a bug that "ls < | more" will pass */
 int parse_args(cmd *c){
-	int j = 0, err = 0;
+	int err = 0;
 	char *curr = c->line, *next = NULL, *direct = NULL;
 	/* the ASCII decimal codes of the whitespace characters */
 	char whitespace[] = " 	\n\r";
@@ -58,13 +58,13 @@ int parse_args(cmd *c){
 				return 0;
 			}
 			else if (*curr == '>' || *curr == '<'){
+				char f[CMDLINE_LEN];
 				if (next == NULL){
 					return bad_redirect(curr);
 				}
 				direct = curr;
 				curr = next+1;
 				next = strpbrk(curr, whitespace);
-				char f[CMDLINE_LEN];
 				if (next){
 					strncpy(f, curr, next-curr);
 				} /* TODO: double check maths */
@@ -218,4 +218,96 @@ char *format_argv(cmd *c, char *buf){
 	temp[strlen(temp)-1] = '\0';
 	strncpy(buf, temp, strlen(temp)+1);
 	return buf;
+}
+
+int parse_pipeline(cmd **cmd_list, char *pipeline){
+	int err = 0, index = 0, stage = 0, pipe_index = -1;
+	int num_pipes = -1, i = 0;
+	char cmdline[CMDLINE_LEN] = {'\0'};
+	char *cp = NULL;
+	cmd *temp_cmd = NULL;
+
+	/* make a local copy of the variable, so as not to modify
+	 * the parameter, and strip the newline */
+	strncpy(cmdline, pipeline, strlen(pipeline));
+	index = strcspn(cmdline, "\n");
+	cmdline[index] = '\0';
+
+	/* if the command line is too long, quit */
+	if (strlen(cmdline) > CMDLINE_LEN){
+		fprintf(stderr, "%s\n", MCMDLINE_LEN);
+		return -1;
+	}
+	
+	/* if the pipeline is too long, quit */
+	num_pipes = strcount(cmdline, "|");
+	if (num_pipes > PIPELINE_LEN){
+		fprintf(stderr, "%s\n", MPIPELINE_LEN);
+		return -1;
+	}
+	
+	if (cmdline[0] == '|'){
+		fprintf(stderr, "%s\n", MEMPTY_PIPE);
+		return -1;
+	}
+
+	cp = cmdline;
+	do{
+		if (*cp == '|'){
+			cp++;
+		}
+		pipe_index = char_index(cp, "|");
+		/* handle each stage */
+		cmd_list[i] = (cmd *)calloc(1, sizeof(cmd));
+		if (cmd_list[i] == NULL){
+			perror("cmd_list calloc");
+			return -1;
+		}
+		*cmd_list[i] = empty_cmd();
+		temp_cmd = cmd_list[i];
+
+		strncpy(temp_cmd->line, cp, \
+			(pipe_index == -1)? strlen(cp): pipe_index);
+		temp_cmd->stage = stage;
+		err = check_line(temp_cmd->line);
+		if (err == -1){
+			fprintf(stderr, "%s\n", MEMPTY_PIPE);
+			return -1;
+		}
+
+		err = parse_args(temp_cmd);
+		switch(err){
+			case -1:
+				fprintf(stderr, "%s\n", MINPUT_REDIR);
+				return -1;
+			case -2:
+				fprintf(stderr, "%s\n", MOUTPUT_REDIR);
+				return -1;
+			case -3:
+				fprintf(stderr, "%s\n", MCMDARGS_LEN);
+				return -1;
+		}
+				
+		err = set_pipes(temp_cmd, num_pipes);
+		switch(err){
+			case 1:
+				fprintf(stderr, "%s\n", MAMBIG_INPUT);
+				return -1;
+			case 2:
+				fprintf(stderr, "%s\n", MAMBIG_OUTPUT);
+				return -1;
+		}
+
+		stage++;
+		i++;
+	} while ((cp = strstr(cp+1, "|")) != NULL);
+	return 0;
+}
+
+void print_pipeline(cmd **cmd_list){
+	int i = 0;
+	while (cmd_list[i] != NULL && i < sizeof(cmd_list)){
+		print_cmd(cmd_list[i]);
+		i++;
+	}
 }
