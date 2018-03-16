@@ -25,53 +25,64 @@ int set_output_fd(cmd *c){
     return 0;
 }
 
-int no_pipes(cmd *c){
-    if (c->input > 2){
-        if (dup2(c->input, STDIN_FILENO) < 0){
-            perror("no_pipes input dup2");
-            return -1;
-        }
-    }
-    if (c->output > 2){
-        if (dup2(c->output, STDOUT_FILENO) < 0){
-            perror("no_pipes output dup2");
-            return -1;
-        }
-    }
-    return 0;
-}
-
 int redirect_pipes(cmd *c, int num_cmds, int *one, int *two){
     if (c->stage == 0){
+        if (-1 == dup2(one[WRITE], STDOUT_FILENO)){
+            perror("stage 0 one[WRITE] dup2");
+            return -1;
+        }
+        fprintf(stdout, "hello\n");
+    }
+    else if (c->stage < num_cmds-1){
+        if (-1 == dup2(one[READ], STDIN_FILENO)){
+            perror("one[READ] dup2");
+            return -1;
+        }
+        if (-1 == dup2(two[WRITE], STDOUT_FILENO)){
+            perror("two[WRITE] dup2");
+            return -1;
+        }
+    }
+    else if (c->stage == num_cmds-1){
+        if (-1 == dup2(two[READ], STDIN_FILENO)){
+            perror("last stage two[READ] dup2");
+            return -1;
+        }
+    }
+
+    /*if (c->stage == 0){
+        if (dup2(c->input, STDIN_FILENO) < 0){
         if (dup2(c->input, one[READ]) < 0){
-            perror("dup2 1.1");
+            perror("dup2");
             return -1;
         }
         if (dup2(one[WRITE], STDOUT_FILENO) < 0){
-            perror("dup2 1.2");
+            perror("dup2");
             return -1;
         }
     }
     else if (c->stage == num_cmds-1){
         if (dup2(two[READ], STDIN_FILENO) < 0){
-            perror("dup2 2.1");
+            perror("dup2");
             return -1;
         }
         if (dup2(c->output, two[WRITE]) < 0){
-            perror("dup2 2.2");
+            perror("dup2");
             return -1;
         }
     }
     else{
         if (dup2(one[READ], STDIN_FILENO) < 0){
-            perror("dup2 3.1");
+            perror("dup2");
             return -1;
         }
         if (dup2(two[WRITE], STDOUT_FILENO) < 0){
-            perror("dup2 3.2");
+            perror("dup2");
             return -1;
         }
-    }
+    }*/
+    close_pipe(one);
+    close_pipe(two);
     return 0;
 }
 

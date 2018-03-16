@@ -1,7 +1,7 @@
 #include "parseline.h"
 #include "mush.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #define DEBUG2 0
 
 int main(int argc, char *argv[]){
@@ -16,6 +16,7 @@ int main(int argc, char *argv[]){
     int one[2] = {0}, two[2] = {0};
     int i = 0, err, quit = 1, num_cmds = 0, num_children = 0;
     int status;
+    int max = 4;
 
     while (quit){
 
@@ -26,7 +27,7 @@ int main(int argc, char *argv[]){
 #if DEBUG
         /*strcpy(pipeline, "ls -l\n");*/
         /*strcpy(pipeline, "ls | sort < foo\n");*/
-        strcpy(pipeline, "ls -tl | sort | wc\n");
+        strcpy(pipeline, "ls -tl | sort\n");
         /*strcpy(pipeline, "ls | more | sort | wc\n");*/
         /*strcpy(pipeline, "cd /home/kmbanzon/Documents\n");*/
 #endif
@@ -46,7 +47,85 @@ int main(int argc, char *argv[]){
             /* do nothing */
         }
 
-        for (i = 0; i < num_cmds; i++){
+        if (pipe(one) < 0){
+            perror("one pipe");
+            exit(EXIT_FAILURE);
+        }
+        if (pipe(two) < 0){
+            perror("two pipe");
+            exit(EXIT_FAILURE);
+        }
+    for (i = 0; i < max; i++){
+        if (!(child = fork())){
+            /* child */
+            if (i == 0){
+                if ( -1 == dup2(one[WRITE],STDOUT_FILENO) ) {
+                    perror("dup2");
+                    exit(-1);
+                }
+            }
+            else if (i < max-1){
+                if ( -1 == dup2(one[READ],STDIN_FILENO) ) {
+                    perror("dup2");
+                    exit(-1);
+                }
+                if ( -1 == dup2(two[WRITE],STDOUT_FILENO) ) {
+                    perror("dup2");
+                    exit(-1);
+                }
+            }
+            else if (i == max-1){
+                if ( -1 == dup2(two[READ],STDIN_FILENO) ) {
+                    perror("dup2");
+                    exit(-1);
+                }
+            }
+
+            /* clean up */
+            close_pipes(one, two);
+            switch(i){
+                case 0:
+                    execl("/bin/ls", "ls", NULL);
+                    break;
+                case 1:
+                    execl("/bin/more", "more", NULL);
+                    break;
+                case 2:
+                    execl("/bin/sort", "sort", "-r", NULL);
+                    break;
+                case 3:
+                    execl("/bin/sort", "sort", NULL);
+                    break;
+            }
+            perror(NULL);
+            exit(-1);
+        }
+    }
+
+    /* parent stuff */
+    /* clean up */
+    num_children++;
+    close_pipes(one, two);
+    while (num_children){
+        int status;
+        if (-1 == wait(&status)){
+            perror("wait");
+        }
+        else{
+            num_children--;
+            if (WIFEXITED(status)){
+                status = WEXITSTATUS(status);
+            }
+            else{
+                status = EXIT_FAILURE;
+            }
+        }
+    }
+    exit(0);
+ }
+ return 0;
+}
+/*        for (i = 0; i < num_cmds; i++){
             if (strcmp(cmd_list[i]->argv[0], "cd") == 0){
                 err = run_cd(cmd_list[i]);
                 if (err < 0){
@@ -61,15 +140,6 @@ int main(int argc, char *argv[]){
                 break;	
             }
 
-            if (pipe(one) < 0){
-                perror("one pipe");
-                exit(EXIT_FAILURE);
-            }
-            if (pipe(two) < 0){
-                perror("two pipe");
-                exit(EXIT_FAILURE);
-            }
-
             child = fork();
             if (child < 0){
                 perror(cmd_list[i]->argv[0]);
@@ -77,8 +147,7 @@ int main(int argc, char *argv[]){
             }
 
             if (child == 0){
-                /* child */               
-
+                
                 if (cmd_list[i]->stage == 0){
                     if (set_input_fd(cmd_list[i]) < 0){
                         exit(EXIT_FAILURE);
@@ -89,18 +158,18 @@ int main(int argc, char *argv[]){
                         exit(EXIT_FAILURE);
                     }
                 }
+#if DEBUG
+                fprintf(stderr, "STDIN: %d, STDOUT: %d\n", fileno(stdin), fileno(stdout));
+#endif
 
-                if (num_cmds == 1){
-                    err = no_pipes(cmd_list[i]);
-                }
-                else{
-                    err = redirect_pipes(cmd_list[i], num_cmds, one, two);
-                }
+                err = redirect_pipes(cmd_list[i], num_cmds, one, two);
+#if DEBUG
+                fprintf(stderr, "STDIN: %d, STDOUT: %d\n", fileno(stdin), fileno(stdout));
+#endif
                 if (err < 0){
                     exit(EXIT_FAILURE);
                 }
-                close_pipe(one);
-                close_pipe(two);
+
 
                 err = run_cmd(cmd_list[i]);
                 if (err < 0){
@@ -113,11 +182,9 @@ int main(int argc, char *argv[]){
             }
 
             else if (getpid() == parent){
-                /* parent */               
                 num_children++;
                 close_pipe(one);
-                one[0] = two[0];
-                one[1] = two[1];
+                close_pipe(two);
                 while (num_children){
                     if (wait(&status) == -1){
                         perror("wait");
@@ -154,4 +221,4 @@ int main(int argc, char *argv[]){
 
 
     return 0;
-}
+}*/
