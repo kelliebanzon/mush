@@ -13,8 +13,6 @@
 #define READ 0
 #define WRITE 1
 
-int fileno(FILE *stream);
-
 /* if this command has a file input, open that file and populate
  * the input field with that file descriptor
  * returns 0 on success, -1 on failure */

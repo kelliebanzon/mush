@@ -10,9 +10,9 @@
 
 /* the maximum length of the command line (in bytes) */
 #define CMDLINE_LEN 512
-/* the maximum length of the pipeline (in bytes) */
+/* the maximum number of stages of the pipeline */
 #define PIPELINE_LEN 10
-/* the maximum number of arguments to any one command (in bytes) */
+/* the maximum number of arguments to any one command */
 #define CMDARGS_LEN 10
 
 /* error message if command line length limit is exceeded */

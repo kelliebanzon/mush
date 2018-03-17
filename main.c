@@ -1,8 +1,8 @@
 #include "parseline.h"
 #include "mush.h"
 
-#define DEBUG 0
-#define DEBUG2 0
+#define DEBUG 1
+#define DEBUG2 1
 
 int main(int argc, char *argv[]){
 
@@ -11,20 +11,41 @@ int main(int argc, char *argv[]){
     pid_t parent = getpid();
     pid_t child;
     int one[2] = {0}, two[2] = {0};
+    int scriptfile;
     int i = 0, err, quit = 1, num_cmds = 0, num_children = 0;
     int status;
 #if DEBUG2
     int while_count = 0;
 #endif
 
+    if (argc == 2){
+        if ((scriptfile = open(argv[1], O_RDONLY)) < 0){
+            perror("scriptfile open");
+            exit(EXIT_FAILURE);
+        }
+        if (read(scriptfile, pipeline, CMDLINE_LEN) < 0){
+            perror("scriptfile read");
+            exit(EXIT_FAILURE);
+        }
+    }
+    else if (argc != 1){
+        fprintf(stderr, "usage: ./mush [scriptfile]\n");
+        exit(EXIT_FAILURE);
+    }
+
     while (quit){
 
 #if !DEBUG2
-        printf("8-P ");
-        fgets(pipeline, CMDLINE_LEN, stdin); /* TODO: tty nonsense? */
+        if (argc == 1){
+            printf("8-P ");
+            fgets(pipeline, CMDLINE_LEN, stdin); /* TODO: tty nonsense? */
+        }
+        else if (argc == 2){
+            quit = 0;
+        }
 #endif
 #if DEBUG
-        strcpy(pipeline, "cd foo\n");
+        /*strcpy(pipeline, "cd foo\n");*/
 #endif
 #if DEBUG2
         /*if (while_count == 0){
@@ -41,7 +62,8 @@ int main(int argc, char *argv[]){
         }*/
         if (while_count == 0){
             /*strcpy(pipeline, "ls | sort < foo\n");*/
-            strcpy(pipeline, "pwd\n");
+            /*strcpy(pipeline, "pwd\n");*/
+            quit = 0;
         }
         else if (while_count == 1){
             /*strcpy(pipeline, "ls -tl | sort | wc\n");*/
@@ -179,6 +201,8 @@ int main(int argc, char *argv[]){
                 }
             }
         }
+
+        fflush(stdout);
 
         for (i = 0; i < strlen(pipeline); i++){
             pipeline[i] = '\0';
