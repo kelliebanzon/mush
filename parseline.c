@@ -221,10 +221,10 @@ char *format_argv(cmd *c, char *buf){
 }
 
 int parse_pipeline(cmd **cmd_list, char *pipeline){
-    int err = 0, stage = 0, pipe_index = -1, n_index = -1;
+    int err = 0, stage = 0, pipe_index = -1/*, n_index = -1*/;
     int num_pipes = -1, i = 0, max_index = -1;
     char cmdline[CMDLINE_LEN] = {'\0'};
-    char *cp = NULL, *index = NULL, *pipe_p = NULL, *n_p = NULL;
+    char *cp = NULL, *index = NULL, *pipe_p = NULL/*, *n_p = NULL*/;
     cmd *temp_cmd = NULL;
 
     /* make a local copy of the variable, so as not to modify
@@ -255,7 +255,13 @@ int parse_pipeline(cmd **cmd_list, char *pipeline){
 
     cp = cmdline;
     do{
-        if (*cp == '|' || *cp == '\n'){
+        if (*cp == '|'){
+            cp++;
+        }
+        pipe_index = char_index(cp, "|");
+        max_index = pipe_index;
+
+        /*if (*cp == '|' || *cp == '\n'){
             cp++;
         }
         pipe_index = char_index(cp, "|");
@@ -268,7 +274,7 @@ int parse_pipeline(cmd **cmd_list, char *pipeline){
         }
         else{
             max_index = (pipe_index < n_index)? pipe_index: n_index;
-        }
+        }*/
 
         /* handle each stage */
         cmd_list[i] = (cmd *)calloc(1, sizeof(cmd));
@@ -314,7 +320,8 @@ int parse_pipeline(cmd **cmd_list, char *pipeline){
         stage++;
         i++;
         pipe_p = strstr(cp+1, "|");
-        n_p = strstr(cp+1, "\n");
+        cp = pipe_p;
+        /*n_p = strstr(cp+1, "\n");
         if (pipe_p == NULL){
             cp = n_p;
         }
@@ -323,7 +330,7 @@ int parse_pipeline(cmd **cmd_list, char *pipeline){
         }
         else{
             cp = (pipe_p < n_p)? pipe_p: n_p;
-        }
+        }*/
         
     } while (cp != NULL);
     return 0;

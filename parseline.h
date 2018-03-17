@@ -75,7 +75,7 @@ typedef struct command{
 
 /* returns the index of the first occurrence of needle in haystack
  * replicates behavior of strstr, but returns int index instead of char*
- * if no space is found, returns -1 */
+ * if no needle is found, returns -1 */
 int char_index(char *haystack, char *needle);
 
 /* returns the number of occurrences of a given char in a string */

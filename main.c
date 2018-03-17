@@ -1,8 +1,8 @@
 #include "parseline.h"
 #include "mush.h"
 
-#define DEBUG 1
-#define DEBUG2 1
+#define DEBUG 0
+#define DEBUG2 0
 
 int main(int argc, char *argv[]){
 
@@ -11,9 +11,11 @@ int main(int argc, char *argv[]){
     pid_t parent = getpid();
     pid_t child;
     int one[2] = {0}, two[2] = {0};
-    int scriptfile;
+    int scriptfile, script_read;
+    char *script_cur = NULL, *script_break = NULL;
+    char scriptbuf[CMDLINE_LEN] = {'\0'};
     int i = 0, err, quit = 1, num_cmds = 0, num_children = 0;
-    int status;
+    int status, pipeline_len;
 #if DEBUG2
     int while_count = 0;
 #endif
@@ -23,10 +25,13 @@ int main(int argc, char *argv[]){
             perror("scriptfile open");
             exit(EXIT_FAILURE);
         }
-        if (read(scriptfile, pipeline, CMDLINE_LEN) < 0){
+        script_read = read(scriptfile, scriptbuf, CMDLINE_LEN);
+        if (script_read < 0){
             perror("scriptfile read");
             exit(EXIT_FAILURE);
         }
+        script_cur = scriptbuf;
+        script_break = scriptbuf;
     }
     else if (argc != 1){
         fprintf(stderr, "usage: ./mush [scriptfile]\n");
@@ -37,13 +42,35 @@ int main(int argc, char *argv[]){
 
 #if !DEBUG2
         if (argc == 1){
-            printf("8-P ");
+            if (isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)){
+                printf("8-P ");
+            }
             fgets(pipeline, CMDLINE_LEN, stdin); /* TODO: tty nonsense? */
         }
         else if (argc == 2){
-            quit = 0;
+            script_cur = script_break;
+            if (*script_cur == '\0'){
+                script_read = read(scriptfile, scriptbuf, CMDLINE_LEN);
+                if (script_read < 0){
+                    perror("scriptfile read");
+                    exit(EXIT_FAILURE);
+                }
+                else if (script_read == 0){
+                    break;
+                }
+            }
+
+            script_break = strchr(script_cur, '\n');
+            script_break++;
+            strncpy(pipeline, script_cur, script_break-script_cur);
+
         }
 #endif
+        pipeline_len = strlen(pipeline);
+        if (pipeline_len == 0){
+            printf("\n");
+            break;
+        }
 #if DEBUG
         /*strcpy(pipeline, "cd foo\n");*/
 #endif
@@ -204,7 +231,7 @@ int main(int argc, char *argv[]){
 
         fflush(stdout);
 
-        for (i = 0; i < strlen(pipeline); i++){
+        for (i = 0; i < pipeline_len; i++){
             pipeline[i] = '\0';
         }
         for (i = 0; i < num_cmds; i++){

@@ -16,6 +16,14 @@ None
 --------------------------------------------------
 Other Information:
 
+Known bugs:
+- The first time the grep command is run, it sometimes produces an
+  incorrect output. Sometimes it seems the parent also neglects to wait
+  for the command to terminate. Note that both of these behaviors are
+  inconsistent. After the first (erroneous) run of grep, all subsequent
+  calls execute properly. This behavior has not been observed with any
+  other commands.
+
 Maximum macros implemented:
 - the maximum length of the command line: 512 bytes
 - the maximum length of the pipeline: 10
