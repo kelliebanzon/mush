@@ -13,7 +13,7 @@ int main(int argc, char *argv[]){
     int one[2] = {0}, two[2] = {0};
     int i = 0, err, quit = 1, num_cmds = 0, num_children = 0;
     int status;
-#if DEBUG
+#if DEBUG2
     int while_count = -1;
 #endif
 
@@ -24,6 +24,9 @@ int main(int argc, char *argv[]){
         fgets(pipeline, CMDLINE_LEN, stdin); /* TODO: tty nonsense? */
 #endif
 #if DEBUG
+        strcpy(pipeline, "a | b | c | d | e | f | g | h | i | j | k\n");
+#endif
+#if DEBUG2
         /*if (while_count == 0){
             strcpy(pipeline, "cat README | wc\n");
         }
@@ -58,14 +61,15 @@ int main(int argc, char *argv[]){
 
         if (pipe(one) < 0){
             perror("one pipe");
-            exit(EXIT_FAILURE);
+            continue;
         }
         if (pipe(two) < 0){
             perror("two pipe");
-            exit(EXIT_FAILURE);
+            continue;
         }
 
 #if DEBUG2
+        printf("pipeline: %s\n", pipeline);
         if (err == 0){
             print_pipeline(cmd_list);
         }
@@ -142,9 +146,13 @@ int main(int argc, char *argv[]){
                 printf("%s: just spawned child process: %d\n", cmd_list[i]->argv[0], child);
 #endif
                 num_children++;
-                if (num_cmds > 3){
+                if (num_cmds > 3 && i > 3){
                     one[0] = two[0];
                     one[1] = two[1];
+                    if (pipe(two) < 0){
+                        perror("pipe two");
+                        break;
+                    }
                 }
             }
 
@@ -174,8 +182,11 @@ int main(int argc, char *argv[]){
         for (i = 0; i < strlen(pipeline); i++){
             pipeline[i] = '\0';
         }
+        for (i = 0; i < num_cmds; i++){
+            cmd_list[i] = NULL;
+        }
 
-#if DEBUG
+#if DEBUG2
         /*quit = 0;*/
         if (while_count < 2){
             while_count++;

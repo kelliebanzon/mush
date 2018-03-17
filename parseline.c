@@ -241,7 +241,7 @@ int parse_pipeline(cmd **cmd_list, char *pipeline){
 	
 	/* if the pipeline is too long, quit */
 	num_pipes = strcount(cmdline, "|");
-	if (num_pipes > PIPELINE_LEN){
+	if (num_pipes > PIPELINE_LEN-1){
 		fprintf(stderr, "%s\n", MPIPELINE_LEN);
 		return -1;
 	}

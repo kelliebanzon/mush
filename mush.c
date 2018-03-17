@@ -129,7 +129,7 @@ int run_cd(cmd *c){
     }
     err = chdir(c->argv[1]);
     if (err < 0){
-        perror("cd");
+        perror(c->argv[1]);
         return -1;
     }
     return 0;
