@@ -41,35 +41,67 @@ int no_pipes(cmd *c){
     return 0;
 }
 
-int redirect_pipes(cmd *c, int num_cmds, int *one, int *two){
+int one_pipe(cmd *c, int num_cmds, int *one){
     if (c->stage == 0){
-        if (dup2(c->input, one[READ]) < 0){
-            perror("dup2 1.1");
-            return -1;
+        if (c->input > 2){
+            if (dup2(c->input, STDIN_FILENO) < 0){
+                perror("one_pipe first stage input dup2");
+                return -1;
+            }
         }
         if (dup2(one[WRITE], STDOUT_FILENO) < 0){
-            perror("dup2 1.2");
+            perror("one_pipe first stage pipe dup2");
+            return -1;
+        }
+    }
+    else if (c->stage == num_cmds-1){
+        if (dup2(one[READ], STDIN_FILENO) < 0){
+            perror("one_pipe second stage pipe dup2");
+            return -1;
+        }
+        if (c->output > 2){
+            if (dup2(c->output, STDOUT_FILENO) < 0){
+                perror("one_pipe second stage output dup2");
+                return -1;
+            }
+        }
+    }
+    return 0;
+}
+
+int redirect_pipes(cmd *c, int num_cmds, int *one, int *two){
+    if (c->stage == 0){
+        if (c->input > 2){
+            if (dup2(c->input, STDIN_FILENO) < 0){
+                perror("redirect_pipes first stage input dup2");
+                return -1;
+            }
+        }
+        if (dup2(one[WRITE], STDOUT_FILENO) < 0){
+            perror("redirect_pipes dup2");
+            return -1;
+        }
+    }
+    else if (c->stage < num_cmds-1){
+        if (dup2(one[READ], STDIN_FILENO) < 0){
+            perror("dup2 2.1");
+            return -1;
+        }
+        if (dup2(two[WRITE], STDOUT_FILENO) < 0){
+            perror("dup2 2.2");
             return -1;
         }
     }
     else if (c->stage == num_cmds-1){
         if (dup2(two[READ], STDIN_FILENO) < 0){
-            perror("dup2 2.1");
-            return -1;
-        }
-        if (dup2(c->output, two[WRITE]) < 0){
-            perror("dup2 2.2");
-            return -1;
-        }
-    }
-    else{
-        if (dup2(one[READ], STDIN_FILENO) < 0){
             perror("dup2 3.1");
             return -1;
         }
-        if (dup2(two[WRITE], STDOUT_FILENO) < 0){
-            perror("dup2 3.2");
-            return -1;
+        if (c->output > 2){
+            if (dup2(c->output, STDOUT_FILENO) < 0){
+                perror("redirect_pipes last stage output dup2");
+                return -1;
+            }
         }
     }
     return 0;
@@ -123,7 +155,7 @@ int run_cmd(cmd *c){
     char *a[CMDARGS_LEN+2];
     int err, i;
     a[0] = "./mush";
-    for (i = 1; i < c->argc; i++){
+    for (i = 0; i < c->argc; i++){
         a[i] = c->argv[i];
     }
     a[i] = NULL;

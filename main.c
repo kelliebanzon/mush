@@ -7,15 +7,15 @@
 int main(int argc, char *argv[]){
 
     char pipeline[CMDLINE_LEN] = {'\0'};
-#if DEBUG2
-    char buf[512] = {'\0'};
-#endif
     cmd *cmd_list[PIPELINE_LEN] = {'\0'};
     pid_t parent = getpid();
     pid_t child;
     int one[2] = {0}, two[2] = {0};
     int i = 0, err, quit = 1, num_cmds = 0, num_children = 0;
     int status;
+#if DEBUG
+    int while_count = -1;
+#endif
 
     while (quit){
 
@@ -24,7 +24,18 @@ int main(int argc, char *argv[]){
         fgets(pipeline, CMDLINE_LEN, stdin); /* TODO: tty nonsense? */
 #endif
 #if DEBUG
-        strcpy(pipeline, "ls -l > ls.txt\n");
+        if (while_count == 0){
+            strcpy(pipeline, "cat README | wc\n");
+        }
+        else if (while_count == 1){
+            strcpy(pipeline, "ls -tl | sort\n");
+        }
+        else if (while_count == 2){
+            strcpy(pipeline, "cat README | sort\n");
+        }
+        else{
+            strcpy(pipeline, "ls -l\n");
+        }
         /*strcpy(pipeline, "ls | sort < foo\n");*/
         /*strcpy(pipeline, "ls -tl | sort | wc\n");*/
         /*strcpy(pipeline, "ls | more | sort | wc\n");*/
@@ -36,10 +47,20 @@ int main(int argc, char *argv[]){
             continue;
         }
 
+        if (pipe(one) < 0){
+            perror("one pipe");
+            exit(EXIT_FAILURE);
+        }
+        if (pipe(two) < 0){
+            perror("two pipe");
+            exit(EXIT_FAILURE);
+        }
+
 #if DEBUG2
         if (err == 0){
             print_pipeline(cmd_list);
         }
+        printf("parent process: %d\n", parent);
 #endif
 
         for (num_cmds = 0; cmd_list[num_cmds] != NULL; num_cmds++){
@@ -58,16 +79,7 @@ int main(int argc, char *argv[]){
                     (strcmp(cmd_list[i]->argv[0], "quit") == 0) ||
                     (strcmp(cmd_list[i]->argv[0], "q") == 0)){
                 quit = 0;
-                break;	
-            }
-
-            if (pipe(one) < 0){
-                perror("one pipe");
-                exit(EXIT_FAILURE);
-            }
-            if (pipe(two) < 0){
-                perror("two pipe");
-                exit(EXIT_FAILURE);
+                break;  
             }
 
             child = fork();
@@ -93,6 +105,9 @@ int main(int argc, char *argv[]){
                 if (num_cmds == 1){
                     err = no_pipes(cmd_list[i]);
                 }
+                else if (num_cmds == 2){
+                    err = one_pipe(cmd_list[i], num_cmds, one);
+                }
                 else{
                     err = redirect_pipes(cmd_list[i], num_cmds, one, two);
                 }
@@ -114,30 +129,37 @@ int main(int argc, char *argv[]){
 
             else if (getpid() == parent){
                 /* parent */               
+#if DEBUG2
+                printf("%s: just spawned child process: %d\n", cmd_list[i]->argv[0], child);
+#endif
                 num_children++;
-                close_pipe(one);
-                one[0] = two[0];
-                one[1] = two[1];
-                while (num_children){
-                    if (wait(&status) == -1){
-                        perror("wait");
-                    }
-                    else{
-                        num_children--;
-                        if (WIFEXITED(status)){
-                            status = WEXITSTATUS(status);
-                        }
-                        else{
-                            status = EXIT_FAILURE;
-                        }
-
-                        if (status == EXIT_FAILURE){
-                            break;
-                        }
-                    }
+                if (num_cmds > 2){
+                    one[0] = two[0];
+                    one[1] = two[1];
                 }
             }
 
+        } /* end for */
+
+        close_pipe(one);
+        close_pipe(two);
+        while (num_children){
+            if (wait(&status) == -1){
+                perror("wait");
+            }
+            else{
+                num_children--;
+                if (WIFEXITED(status)){
+                    status = WEXITSTATUS(status);
+                }
+                else{
+                    status = EXIT_FAILURE;
+                }
+
+                if (status == EXIT_FAILURE){
+                    break;
+                }
+            }
         }
 
 #if DEBUG
@@ -147,10 +169,16 @@ int main(int argc, char *argv[]){
 #endif
 
 #if DEBUG
-        quit = 0;
+        /*quit = 0;*/
+        if (while_count < 2){
+            while_count++;
+        }
+        else{
+            quit = 0;
+        }
 #endif
 
-    }
+    } /* end while */
 
 
     return 0;

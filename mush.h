@@ -24,9 +24,12 @@ int set_input_fd(cmd *c);
  * returns 0 on success, -1 on failure */
 int set_output_fd(cmd *c);
 
-/* handles the < and > redirects, if they exist
+/* handles the < and > redirects, if they exist, for a pipeline
+ * with only one stage
  * returns 0 on success, -1 on failure */
 int no_pipes(cmd *c);
+
+int one_pipe(cmd *c, int num_cmds, int *one);
 
 int redirect_pipes(cmd *c, int num_cmds, int *one, int *two);
 
