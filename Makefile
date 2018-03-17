@@ -32,4 +32,4 @@ test_print:
 
 
 clean:
-	rm *.o parseline mush
+	rm *.o

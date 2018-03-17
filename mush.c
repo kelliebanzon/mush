@@ -15,12 +15,16 @@ int set_input_fd(cmd *c){
 
 int set_output_fd(cmd *c){
     if (*c->output_name != '\0'){
+        /*mode_t mask = 0220;
+        mode_t old;
+        old = umask(mask);*/
         c->output = open(c->output_name, O_WRONLY | O_CREAT | O_TRUNC, 0666);
         if (c->output < 0){
             fprintf(stderr, "\"%s\" output: ", c->argv[0]);
             perror(NULL);
             return -1;
         }
+        /*umask(old);*/
     }
     return 0;
 }
@@ -118,7 +122,7 @@ void close_pipe(int *pipe){
 
 /* TODO: can't handle ~/ paths */
 int run_cd(cmd *c){
-    int err;
+    int err = 0;
     if (c->stage != 0){
         fprintf(stderr, "cd: cannot change directories in a pipeline\n");
         return -1;

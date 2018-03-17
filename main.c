@@ -14,17 +14,17 @@ int main(int argc, char *argv[]){
     int i = 0, err, quit = 1, num_cmds = 0, num_children = 0;
     int status;
 #if DEBUG2
-    int while_count = -1;
+    int while_count = 0;
 #endif
 
     while (quit){
 
-#if !DEBUG
+#if !DEBUG2
         printf("8-P ");
         fgets(pipeline, CMDLINE_LEN, stdin); /* TODO: tty nonsense? */
 #endif
 #if DEBUG
-        strcpy(pipeline, "a | b | c | d | e | f | g | h | i | j | k\n");
+        strcpy(pipeline, "cd foo\n");
 #endif
 #if DEBUG2
         /*if (while_count == 0){
@@ -40,13 +40,16 @@ int main(int argc, char *argv[]){
             strcpy(pipeline, "ls -l\n");
         }*/
         if (while_count == 0){
-            strcpy(pipeline, "ls | sort < foo\n");
+            /*strcpy(pipeline, "ls | sort < foo\n");*/
+            strcpy(pipeline, "pwd\n");
         }
         else if (while_count == 1){
-            strcpy(pipeline, "ls -tl | sort | wc\n");
+            /*strcpy(pipeline, "ls -tl | sort | wc\n");*/
+            strcpy(pipeline, "cd foo\n");
         }
         else if (while_count == 2){
-            strcpy(pipeline, "ls | more | sort | wc\n");
+            /*strcpy(pipeline, "ls | more | sort | wc\n");*/
+            strcpy(pipeline, "pwd\n");
         }
         else{
             strcpy(pipeline, "ls -l\n");
@@ -83,9 +86,7 @@ int main(int argc, char *argv[]){
         for (i = 0; i < num_cmds; i++){
             if (strcmp(cmd_list[i]->argv[0], "cd") == 0){
                 err = run_cd(cmd_list[i]);
-                if (err < 0){
-                    break;
-                }
+                break;
             }
 
             else if ((strcmp(cmd_list[i]->argv[0], "exit") == 0) ||
