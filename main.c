@@ -24,7 +24,7 @@ int main(int argc, char *argv[]){
         fgets(pipeline, CMDLINE_LEN, stdin); /* TODO: tty nonsense? */
 #endif
 #if DEBUG
-        if (while_count == 0){
+        /*if (while_count == 0){
             strcpy(pipeline, "cat README | wc\n");
         }
         else if (while_count == 1){
@@ -35,10 +35,19 @@ int main(int argc, char *argv[]){
         }
         else{
             strcpy(pipeline, "ls -l\n");
+        }*/
+        if (while_count == 0){
+            strcpy(pipeline, "ls | sort < foo\n");
         }
-        /*strcpy(pipeline, "ls | sort < foo\n");*/
-        /*strcpy(pipeline, "ls -tl | sort | wc\n");*/
-        /*strcpy(pipeline, "ls | more | sort | wc\n");*/
+        else if (while_count == 1){
+            strcpy(pipeline, "ls -tl | sort | wc\n");
+        }
+        else if (while_count == 2){
+            strcpy(pipeline, "ls | more | sort | wc\n");
+        }
+        else{
+            strcpy(pipeline, "ls -l\n");
+        }
         /*strcpy(pipeline, "cd /home/kmbanzon/Documents\n");*/
 #endif
 
@@ -133,7 +142,7 @@ int main(int argc, char *argv[]){
                 printf("%s: just spawned child process: %d\n", cmd_list[i]->argv[0], child);
 #endif
                 num_children++;
-                if (num_cmds > 2){
+                if (num_cmds > 3){
                     one[0] = two[0];
                     one[1] = two[1];
                 }
@@ -162,11 +171,9 @@ int main(int argc, char *argv[]){
             }
         }
 
-#if DEBUG
         for (i = 0; i < strlen(pipeline); i++){
             pipeline[i] = '\0';
         }
-#endif
 
 #if DEBUG
         /*quit = 0;*/

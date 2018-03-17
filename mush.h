@@ -29,18 +29,18 @@ int set_output_fd(cmd *c);
  * returns 0 on success, -1 on failure */
 int no_pipes(cmd *c);
 
+/* for pipelines with two commands
+ * handles piping and input/output redirection, if applicable
+ * returns 0 on success, -1 on failure */
 int one_pipe(cmd *c, int num_cmds, int *one);
 
+/* for pipelines with three or more commands
+ * handles piping and input/output redirection, if applicable
+ * returns 0 on success, -1 on failure */
 int redirect_pipes(cmd *c, int num_cmds, int *one, int *two);
 
+/* closes both ends of the pipe */
 void close_pipe(int *pipe);
-
-/* populates the input and output file descriptors of the cmd struct
- * returns 0 on success, -1 on failure */
-/*int set_cmd_fds(cmd *c);*/
-
-/* returns the file descriptors for input and output of a command as
- * a list in the format {infile, outfile} TODO: */
 
 /* runs the "cd" command
  * returns 0 on success, -1 on failure */

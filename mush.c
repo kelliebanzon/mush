@@ -66,6 +66,10 @@ int one_pipe(cmd *c, int num_cmds, int *one){
             }
         }
     }
+    else{
+        fprintf(stderr, "one_pipe unexpected stage number: %d\n", c->stage);
+        return -1;
+    }
     return 0;
 }
 
@@ -111,26 +115,6 @@ void close_pipe(int *pipe){
     close(pipe[READ]);
     close(pipe[WRITE]);
 }
-
-/*int set_cmd_fds(cmd *c){
-    if (*c->input_name != '\0'){
-        c->input = open(c->input_name, O_WRONLY, O_CREAT | O_TRUNC, 0446);
-        if (c->input < 0){
-            fprintf(stderr, "\"%s\" input: ", c->argv[0]);
-            perror(NULL);
-            return -1;
-        }
-    }
-    if (*c->output_name != '\0'){
-        c->output = open(c->output_name, O_WRONLY, O_CREAT | O_TRUNC, 0446);
-        if (c->output < 0){
-            fprintf(stderr, "\"%s\" output: ", c->argv[0]);
-            perror(NULL);
-            return -1;
-        }
-    }
-    return 0;
-}*/
 
 /* TODO: can't handle ~/ paths */
 int run_cd(cmd *c){
