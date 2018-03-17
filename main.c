@@ -24,9 +24,9 @@ int main(int argc, char *argv[]){
         fgets(pipeline, CMDLINE_LEN, stdin); /* TODO: tty nonsense? */
 #endif
 #if DEBUG
-        /*strcpy(pipeline, "ls -l\n");*/
+        strcpy(pipeline, "ls -l > ls.txt\n");
         /*strcpy(pipeline, "ls | sort < foo\n");*/
-        strcpy(pipeline, "ls -tl | sort | wc\n");
+        /*strcpy(pipeline, "ls -tl | sort | wc\n");*/
         /*strcpy(pipeline, "ls | more | sort | wc\n");*/
         /*strcpy(pipeline, "cd /home/kmbanzon/Documents\n");*/
 #endif
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]){
                         exit(EXIT_FAILURE);
                     }
                 }
-                else if (cmd_list[i]->stage == num_cmds-1){
+                if (cmd_list[i]->stage == num_cmds-1){
                     if (set_output_fd(cmd_list[i]) < 0){
                         exit(EXIT_FAILURE);
                     }

@@ -15,7 +15,7 @@ int set_input_fd(cmd *c){
 
 int set_output_fd(cmd *c){
     if (*c->output_name != '\0'){
-        c->output = open(c->output_name, O_WRONLY, O_CREAT | O_TRUNC, 0446);
+        c->output = open(c->output_name, O_WRONLY | O_CREAT | O_TRUNC, 0666);
         if (c->output < 0){
             fprintf(stderr, "\"%s\" output: ", c->argv[0]);
             perror(NULL);
