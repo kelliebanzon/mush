@@ -36,40 +36,40 @@
 
 
 typedef struct command{
-	/* the full line of text associated with this command,
-	 * including spaces */
-	char line[CMDLINE_LEN];
-	/* the number of keywords associated with this command
-	 * keywords do not include symbols or redirections */
-	int argc;
-	/* the keywords */
-	char argv[CMDARGS_LEN][CMDLINE_LEN];
-	/* where to send the input
-	 * - if < 0: indicates a pipe, where the pipe number is the
-	 *   		 absolute value + 1 (to account for the fact that
-	 *   		 the pipe of stage 0 cannot be 0, else if would
-	 *   		 overlap with stdin)
-	 * - if = 0, 1, or 2: indicates stdin, stdout, stderr
-	 * - if > 2: indicates a file descriptor */
-	int input;
-	/* if input is a file, this is the name of the file
-	 * otherwise, remains NULL */
-	char input_name[CMDLINE_LEN];
-	/* where to send the output 
-	 * - if < 0: indicates a pipe, where the pipe number is the
-	 *   		 absolute value + 1 (to account for the fact that
-	 *   		 the pipe of stage 0 cannot be 0, else if would
-	 *   		 overlap with stdin)
-	 * - if = 0, 1, or 2: indicates stdin, stdout, stderr
-	 * - if > 2: indicates a file descriptor */
-	int output;
-	/* if output is a file, this is the name of the file
-	 * otherwise, remains NULL */
-	char output_name[CMDLINE_LEN];
-	/* the stage this command is associated with */
-	int stage;
-	/* the next command in the pipeline */
-	struct command *next;
+    /* the full line of text associated with this command,
+     * including spaces */
+    char line[CMDLINE_LEN];
+    /* the number of keywords associated with this command
+     * keywords do not include symbols or redirections */
+    int argc;
+    /* the keywords */
+    char argv[CMDARGS_LEN][CMDLINE_LEN];
+    /* where to send the input
+     * - if < 0: indicates a pipe, where the pipe number is the
+     *   		 absolute value + 1 (to account for the fact that
+     *   		 the pipe of stage 0 cannot be 0, else if would
+     *   		 overlap with stdin)
+     * - if = 0, 1, or 2: indicates stdin, stdout, stderr
+     * - if > 2: indicates a file descriptor */
+    int input;
+    /* if input is a file, this is the name of the file
+     * otherwise, remains NULL */
+    char input_name[CMDLINE_LEN];
+    /* where to send the output 
+     * - if < 0: indicates a pipe, where the pipe number is the
+     *   		 absolute value + 1 (to account for the fact that
+     *   		 the pipe of stage 0 cannot be 0, else if would
+     *   		 overlap with stdin)
+     * - if = 0, 1, or 2: indicates stdin, stdout, stderr
+     * - if > 2: indicates a file descriptor */
+    int output;
+    /* if output is a file, this is the name of the file
+     * otherwise, remains NULL */
+    char output_name[CMDLINE_LEN];
+    /* the stage this command is associated with */
+    int stage;
+    /* the next command in the pipeline */
+    struct command *next;
 }(cmd);
 
 
