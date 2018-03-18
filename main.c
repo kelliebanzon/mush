@@ -4,6 +4,8 @@
 #define DEBUG 0
 #define DEBUG2 0
 
+/* the number of child processes running */
+static int num_children = 0;
 
 int main(int argc, char *argv[]){
 
@@ -16,12 +18,9 @@ int main(int argc, char *argv[]){
     char *script_cur = NULL, *script_break = NULL;
     char scriptbuf[CMDLINE_LEN] = {'\0'};
     int i = 0, err, quit = 1, num_cmds = 0;
-    int status, pipeline_len;
+    int status, pipeline_len = 0;
     struct sigaction sa;
     sigset_t set, old;
-#if DEBUG2
-    int while_count = 0;
-#endif
 
     sa.sa_handler = int_handler;
     sigemptyset(&sa.sa_mask);
@@ -51,10 +50,6 @@ int main(int argc, char *argv[]){
     }
 
     while (quit){
-#if DEBUG
-        fprintf(stderr, "\nstart main while: %d children\n", num_children);
-#endif
-
 
         for (i = 0; i < pipeline_len; i++){
             pipeline[i] = '\0';
@@ -63,7 +58,6 @@ int main(int argc, char *argv[]){
             cmd_list[i] = NULL;
         }
 
-#if !DEBUG2
         if (argc == 1){
             if (isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)){
                 printf("8-P ");
@@ -86,7 +80,7 @@ int main(int argc, char *argv[]){
                     perror("scriptfile read");
                     exit(EXIT_FAILURE);
                 }
-                else if (script_read == 0){ /* TODO: check this for eof? */
+                else if (script_read == 0){
                     break;
                 }
             }
@@ -96,40 +90,6 @@ int main(int argc, char *argv[]){
             strncpy(pipeline, script_cur, script_break-script_cur);
 
         }
-#endif
-#if DEBUG2
-        strcpy(pipeline, "");
-        /*strcpy(pipeline, "cd foo\n");*/
-        /*if (while_count == 0){
-            strcpy(pipeline, "cat README | wc\n");
-        }
-        else if (while_count == 1){
-            strcpy(pipeline, "ls -tl | sort\n");
-        }
-        else if (while_count == 2){
-            strcpy(pipeline, "cat README | sort\n");
-        }
-        else{
-            strcpy(pipeline, "ls -l\n");
-        }*/
-        if (while_count == 0){
-            /*strcpy(pipeline, "ls | sort < foo\n");*/
-            strcpy(pipeline, "pwd\n");
-        }
-        else if (while_count == 1){
-            /*strcpy(pipeline, "ls -tl | sort | wc\n");*/
-            strcpy(pipeline, "");
-            quit = 0;
-        }
-        else if (while_count == 2){
-            /*strcpy(pipeline, "ls | more | sort | wc\n");*/
-            strcpy(pipeline, "pwd\n");
-        }
-        else{
-            strcpy(pipeline, "ls -l\n");
-        }
-        /*strcpy(pipeline, "cd /home/kmbanzon/Documents\n");*/
-#endif
 
         pipeline_len = strlen(pipeline);
         if (pipeline_len == 0){
@@ -153,14 +113,6 @@ int main(int argc, char *argv[]){
             perror("two pipe");
             continue;
         }
-
-#if DEBUG2
-        printf("pipeline: %s\n", pipeline);
-        if (err == 0){
-            print_pipeline(cmd_list);
-        }
-        printf("parent process: %d\n", parent);
-#endif
 
         for (num_cmds = 0; cmd_list[num_cmds] != NULL; num_cmds++){
             /* do nothing */
@@ -237,10 +189,6 @@ int main(int argc, char *argv[]){
 
                 /* unblock SIGINTs */
                 sigprocmask(SIG_SETMASK, &old, NULL);
-#if DEBUG2
-                fprintf(stderr, "%s: just spawned child process: %d\n", cmd_list[i]->argv[0], child);
-                fprintf(stderr, "%d children\n", num_children);
-#endif
                 if (num_cmds > 3 && i > 3){
                     one[0] = two[0];
                     one[1] = two[1];
@@ -256,9 +204,6 @@ int main(int argc, char *argv[]){
         close_pipe(one);
         close_pipe(two);
         while (num_children){
-#if DEBUG
-            fprintf(stderr, "wait while: %d children\n", num_children);
-#endif
             wait(&status);
             if (WIFEXITED(status)){
                 num_children--;
@@ -272,25 +217,14 @@ int main(int argc, char *argv[]){
                 break;
             }
         }
-#if DEBUG
-        fprintf(stderr, "finish wait while\n");
-#endif
 
         fflush(stdout);
 
-
-#if DEBUG2
-        /*quit = 0;*/
-        if (while_count < 2){
-            while_count++;
-        }
-        else{
-            quit = 0;
-        }
-#endif
-
     } /* end while */
 
+    for (i = 0; cmd_list[i] != NULL; i++){
+        free(cmd_list[i]);
+    }
 
     return 0;
 }

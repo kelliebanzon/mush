@@ -1,7 +1,5 @@
 #include "parseline.h"
 
-#define DEBUG 0
-
 
 /* error message if command line length limit is exceeded */
 const char *mcmdline_len = "command too long";
@@ -32,22 +30,6 @@ int main(int argc, char *argv[]){
     cmd *cmd_list[PIPELINE_LEN] = {'\0'};
     cmd *temp_cmd = NULL;
 
-#if DEBUG
-    /*strcpy(cmdline, "ls <\n");*/
-    /*strcpy(cmdline, "ls < a | more < file\n");*/
-    /*strcpy(cmdline, \
-      "This command has way more than the required ten arguments.");
-      strcat(cmdline, " It really should make up its mind.\n");*/
-    /*strcpy(cmdline, "cat < foo > bar\n");*/
-    strcpy(cmdline, "ls < one | more | sort\n");
-    /*strncpy(cmdline, "ls < one > two three four\n", 27);*/
-    /*strcpy(cmdline, "ls | more\n");*/
-    /*strcpy(cmdline, "ls < one two three |	| > more | sort\n");*/
-#endif
-#if !DEBUG
-    printf("line: ");
-    fgets(cmdline, CMDLINE_LEN, stdin);
-#endif
     /* strip the newline */
     index = strcspn(cmdline, "\n");
     cmdline[index] = '\0';
@@ -116,8 +98,6 @@ int main(int argc, char *argv[]){
                 fprintf(stderr, "%s\n", mambig_output);
                 exit(EXIT_FAILURE);
         }
-
-        /*print_cmd(&temp_cmd);*/
 
         stage++;
         i++;

@@ -1,8 +1,6 @@
 #include "parseline.h"
 #include "mush.h"
 
-static int num_children = 0;
-
 int set_input_fd(cmd *c){
     if (*c->input_name != '\0'){
         c->input = open(c->input_name, O_RDONLY);
