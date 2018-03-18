@@ -18,9 +18,19 @@ int main(int argc, char *argv[]){
     int i = 0, err, quit = 1, num_cmds = 0;
     int status, pipeline_len;
     struct sigaction sa;
+    sigset_t set, old;
 #if DEBUG2
     int while_count = 0;
 #endif
+
+    sa.sa_handler = int_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGINT, &sa, NULL);
+
+    sigemptyset(&set);
+    sigemptyset(&old);
+    sigaddset(&set, SIGINT);
 
     if (argc == 2){
         if ((scriptfile = open(argv[1], O_RDONLY)) < 0){
@@ -45,10 +55,6 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "\nstart main while: %d children\n", num_children);
 #endif
 
-        sa.sa_handler = int_handler;
-        sigemptyset(&sa.sa_mask);
-        sa.sa_flags = 0;
-        sigaction(SIGINT, &sa, NULL);
 
         for (i = 0; i < pipeline_len; i++){
             pipeline[i] = '\0';
@@ -175,6 +181,9 @@ int main(int argc, char *argv[]){
 
             num_children++;
 
+            /* blocks SIGINTs during the fork */
+            sigprocmask(SIG_BLOCK, &set, &old);
+
             child = fork();
             if (child < 0){
                 perror(cmd_list[i]->argv[0]);
@@ -183,6 +192,9 @@ int main(int argc, char *argv[]){
 
             if (child == 0){
                 /* child */               
+                
+                /* unblock SIGINTs */
+                sigprocmask(SIG_SETMASK, &old, NULL);
 
                 if (cmd_list[i]->stage == 0){
                     if (set_input_fd(cmd_list[i]) < 0){
@@ -222,6 +234,9 @@ int main(int argc, char *argv[]){
 
             else if (getpid() == parent){
                 /* parent */               
+
+                /* unblock SIGINTs */
+                sigprocmask(SIG_SETMASK, &old, NULL);
 #if DEBUG2
                 fprintf(stderr, "%s: just spawned child process: %d\n", cmd_list[i]->argv[0], child);
                 fprintf(stderr, "%d children\n", num_children);
