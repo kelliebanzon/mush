@@ -17,16 +17,12 @@ int set_input_fd(cmd *c){
 
 int set_output_fd(cmd *c){
     if (*c->output_name != '\0'){
-        /*mode_t mask = 0220;
-        mode_t old;
-        old = umask(mask);*/
         c->output = open(c->output_name, O_WRONLY | O_CREAT | O_TRUNC, 0666);
         if (c->output < 0){
             fprintf(stderr, "\"%s\" output: ", c->argv[0]);
             perror(NULL);
             return -1;
         }
-        /*umask(old);*/
     }
     return 0;
 }
@@ -94,17 +90,17 @@ int redirect_pipes(cmd *c, int num_cmds, int *one, int *two){
     }
     else if (c->stage < num_cmds-1){
         if (dup2(one[READ], STDIN_FILENO) < 0){
-            perror("dup2 2.1");
+            perror("redirect_pipes middle stage read dup2");
             return -1;
         }
         if (dup2(two[WRITE], STDOUT_FILENO) < 0){
-            perror("dup2 2.2");
+            perror("redirect_pipes middle stage write dup2");
             return -1;
         }
     }
     else if (c->stage == num_cmds-1){
         if (dup2(two[READ], STDIN_FILENO) < 0){
-            perror("dup2 3.1");
+            perror("redirect_pipes last stage read dup2");
             return -1;
         }
         if (c->output > 2){
@@ -122,7 +118,6 @@ void close_pipe(int *pipe){
     close(pipe[WRITE]);
 }
 
-/* TODO: can't handle ~/ paths */
 int run_cd(cmd *c){
     int err = 0;
     if (c->stage != 0){
@@ -161,17 +156,11 @@ void close_pipes(int *one, int *two){
 }
 
 void int_handler(int signum){
-    /* TODO: */
     struct sigaction sa;
     sa.sa_handler = int_handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
-
-    fprintf(stderr, "SIGINT received\n");
-    while (num_children){
-        wait(NULL);
-        num_children--;
-    }
-    printf("8-P ");
+    wait(NULL);
+    printf("\n");
 }

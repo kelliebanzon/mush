@@ -22,11 +22,6 @@ int main(int argc, char *argv[]){
     int while_count = 0;
 #endif
 
-    sa.sa_handler = int_handler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
-    sigaction(SIGINT, &sa, NULL);
-
     if (argc == 2){
         if ((scriptfile = open(argv[1], O_RDONLY)) < 0){
             perror("scriptfile open");
@@ -46,8 +41,23 @@ int main(int argc, char *argv[]){
     }
 
     while (quit){
+#if DEBUG
+        fprintf(stderr, "\nstart main while: %d children\n", num_children);
+#endif
 
-#if !DEBUG
+        sa.sa_handler = int_handler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
+        sigaction(SIGINT, &sa, NULL);
+
+        for (i = 0; i < pipeline_len; i++){
+            pipeline[i] = '\0';
+        }
+        for (i = 0; i < num_cmds; i++){
+            cmd_list[i] = NULL;
+        }
+
+#if !DEBUG2
         if (argc == 1){
             if (isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)){
                 printf("8-P ");
@@ -56,6 +66,9 @@ int main(int argc, char *argv[]){
                 if (feof(stdin)){
                     printf("\n");
                     break;
+                }
+                else{
+                    continue;
                 }
             }
         }
@@ -78,11 +91,9 @@ int main(int argc, char *argv[]){
 
         }
 #endif
-#if DEBUG
+#if DEBUG2
         strcpy(pipeline, "");
         /*strcpy(pipeline, "cd foo\n");*/
-#endif
-#if DEBUG2
         /*if (while_count == 0){
             strcpy(pipeline, "cat README | wc\n");
         }
@@ -162,6 +173,8 @@ int main(int argc, char *argv[]){
                 break;  
             }
 
+            num_children++;
+
             child = fork();
             if (child < 0){
                 perror(cmd_list[i]->argv[0]);
@@ -210,9 +223,9 @@ int main(int argc, char *argv[]){
             else if (getpid() == parent){
                 /* parent */               
 #if DEBUG2
-                printf("%s: just spawned child process: %d\n", cmd_list[i]->argv[0], child);
+                fprintf(stderr, "%s: just spawned child process: %d\n", cmd_list[i]->argv[0], child);
+                fprintf(stderr, "%d children\n", num_children);
 #endif
-                num_children++;
                 if (num_cmds > 3 && i > 3){
                     one[0] = two[0];
                     one[1] = two[1];
@@ -228,32 +241,28 @@ int main(int argc, char *argv[]){
         close_pipe(one);
         close_pipe(two);
         while (num_children){
-            if (wait(&status) == -1){
-                perror("wait");
+#if DEBUG
+            fprintf(stderr, "wait while: %d children\n", num_children);
+#endif
+            wait(&status);
+            if (WIFEXITED(status)){
+                num_children--;
+                status = WEXITSTATUS(status);
             }
             else{
-                num_children--;
-                if (WIFEXITED(status)){
-                    status = WEXITSTATUS(status);
-                }
-                else{
-                    status = EXIT_FAILURE;
-                }
+                status = EXIT_FAILURE;
+            }
 
-                if (status == EXIT_FAILURE){
-                    break;
-                }
+            if (status == EXIT_FAILURE){
+                break;
             }
         }
+#if DEBUG
+        fprintf(stderr, "finish wait while\n");
+#endif
 
         fflush(stdout);
 
-        for (i = 0; i < pipeline_len; i++){
-            pipeline[i] = '\0';
-        }
-        for (i = 0; i < num_cmds; i++){
-            cmd_list[i] = NULL;
-        }
 
 #if DEBUG2
         /*quit = 0;*/
