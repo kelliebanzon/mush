@@ -9,9 +9,13 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #define READ 0
 #define WRITE 1
+
+/* the number of child processes running */
+static int num_children;
 
 /* if this command has a file input, open that file and populate
  * the input field with that file descriptor
@@ -55,7 +59,10 @@ void close_pipe(int *pipe);
 /* closes both ends of the pipes */
 void close_pipes(int *one, int *two);
 
-
+/* catches SIGINT's
+ * waits for children to terminate, then prints the prompt to 
+ * continue interactive mush mode */
+void int_handler(int signum);
 
 
 #endif

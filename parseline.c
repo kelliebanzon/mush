@@ -48,7 +48,7 @@ int parse_args(cmd *c){
     /* note: c->line+1 is a safe assignment because check_line already
      * verified that c->line is not empty */
     while (curr != NULL && *curr != '\0'){
-        if (c->argc >= 10){
+        if (c->argc >= CMDARGS_LEN){
             return -3;
         }
         if (!isspace(*curr)){ /* to strip leading whitespace */

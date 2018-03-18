@@ -26,8 +26,8 @@ Known bugs:
 
 Maximum macros implemented:
 - the maximum length of the command line: 512 bytes
-- the maximum length of the pipeline: 10
-- the maximum number of arguments to any one command: 10
+- the maximum length of the pipeline: 20
+- the maximum number of arguments to any one command: 20
 
 Additional commands implemented:
 - "exit", "quit", and "q" will all terminate the shell

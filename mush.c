@@ -1,6 +1,8 @@
 #include "parseline.h"
 #include "mush.h"
 
+static int num_children = 0;
+
 int set_input_fd(cmd *c){
     if (*c->input_name != '\0'){
         c->input = open(c->input_name, O_RDONLY);
@@ -156,4 +158,20 @@ void close_pipes(int *one, int *two){
     close(one[WRITE]);
     close(two[READ]);
     close(two[WRITE]);
+}
+
+void int_handler(int signum){
+    /* TODO: */
+    struct sigaction sa;
+    sa.sa_handler = int_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGINT, &sa, NULL);
+
+    fprintf(stderr, "SIGINT received\n");
+    while (num_children){
+        wait(NULL);
+        num_children--;
+    }
+    printf("8-P ");
 }

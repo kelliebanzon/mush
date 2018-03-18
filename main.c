@@ -4,9 +4,10 @@
 #define DEBUG 0
 #define DEBUG2 0
 
+
 int main(int argc, char *argv[]){
 
-    char pipeline[CMDLINE_LEN] = {'\0'};
+    char pipeline[CMDLINE_LEN+1] = {'\0'};
     cmd *cmd_list[PIPELINE_LEN] = {'\0'};
     pid_t parent = getpid();
     pid_t child;
@@ -14,11 +15,17 @@ int main(int argc, char *argv[]){
     int scriptfile, script_read;
     char *script_cur = NULL, *script_break = NULL;
     char scriptbuf[CMDLINE_LEN] = {'\0'};
-    int i = 0, err, quit = 1, num_cmds = 0, num_children = 0;
+    int i = 0, err, quit = 1, num_cmds = 0;
     int status, pipeline_len;
+    struct sigaction sa;
 #if DEBUG2
     int while_count = 0;
 #endif
+
+    sa.sa_handler = int_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGINT, &sa, NULL);
 
     if (argc == 2){
         if ((scriptfile = open(argv[1], O_RDONLY)) < 0){
@@ -40,12 +47,17 @@ int main(int argc, char *argv[]){
 
     while (quit){
 
-#if !DEBUG2
+#if !DEBUG
         if (argc == 1){
             if (isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)){
                 printf("8-P ");
             }
-            fgets(pipeline, CMDLINE_LEN, stdin); /* TODO: tty nonsense? */
+            if (fgets(pipeline, CMDLINE_LEN, stdin) == NULL){
+                if (feof(stdin)){
+                    printf("\n");
+                    break;
+                }
+            }
         }
         else if (argc == 2){
             script_cur = script_break;
@@ -55,7 +67,7 @@ int main(int argc, char *argv[]){
                     perror("scriptfile read");
                     exit(EXIT_FAILURE);
                 }
-                else if (script_read == 0){
+                else if (script_read == 0){ /* TODO: check this for eof? */
                     break;
                 }
             }
@@ -66,12 +78,8 @@ int main(int argc, char *argv[]){
 
         }
 #endif
-        pipeline_len = strlen(pipeline);
-        if (pipeline_len == 0){
-            printf("\n");
-            break;
-        }
 #if DEBUG
+        strcpy(pipeline, "");
         /*strcpy(pipeline, "cd foo\n");*/
 #endif
 #if DEBUG2
@@ -89,12 +97,12 @@ int main(int argc, char *argv[]){
         }*/
         if (while_count == 0){
             /*strcpy(pipeline, "ls | sort < foo\n");*/
-            /*strcpy(pipeline, "pwd\n");*/
-            quit = 0;
+            strcpy(pipeline, "pwd\n");
         }
         else if (while_count == 1){
             /*strcpy(pipeline, "ls -tl | sort | wc\n");*/
-            strcpy(pipeline, "cd foo\n");
+            strcpy(pipeline, "");
+            quit = 0;
         }
         else if (while_count == 2){
             /*strcpy(pipeline, "ls | more | sort | wc\n");*/
@@ -105,6 +113,15 @@ int main(int argc, char *argv[]){
         }
         /*strcpy(pipeline, "cd /home/kmbanzon/Documents\n");*/
 #endif
+
+        pipeline_len = strlen(pipeline);
+        if (pipeline_len == 0){
+            printf("\n");
+            break;
+        }
+        else if (pipeline_len == 1 && *pipeline == '\n'){
+            continue;
+        }
 
         err = parse_pipeline(cmd_list, pipeline);
         if (err < 0){
